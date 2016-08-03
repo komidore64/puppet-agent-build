@@ -1,0 +1,27 @@
+---
+- name: 'Make build directory'
+  file:
+    path: "{{ build_dir }}"
+    state: directory
+
+- name: 'Download Boost'
+  get_url:
+    url: "https://github.com/boostorg/build/releases/download/{{ boost_version.replace('-', '.') }}/boost-build-{{ boost_version }}.tar.bz2"
+    dest: "{{ build_dir }}"
+    validate_certs: no
+
+- name: 'Untar boost'
+  unarchive:
+    src: "{{ build_dir }}/boost-build-{{ boost_version }}.tar.bz2"
+    dest: "{{ playbook_dir }}/{{ build_dir }}"
+    creates: "{{ build_dir }}/boost-build"
+
+- name: 'Bootstrap boost'
+  command: "./bootstrap.sh"
+  args:
+    chdir: "{{ build_dir }}/boost-build"
+
+- name: 'Install boost'
+  shell: "./b2 install --with=all --prefix={{ puppetlabs_build_dir }}"
+  args:
+    chdir: "{{ build_dir }}/boost-build"

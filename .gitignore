@@ -1,0 +1,7 @@
+puppet-agent*
+build/*
+*.retry
+*.swp
+*.swn
+*.swo
+*.pyc

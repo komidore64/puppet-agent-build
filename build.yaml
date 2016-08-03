@@ -1,0 +1,52 @@
+---
+- hosts: localhost
+  vars:
+    build_dir: build
+    puppetlabs_build_dir: /opt/pl-build-tools
+    cmake_version: 3.2.3
+    boost_version: 2014-10
+  tasks:
+    - include: cmake.yaml
+    - include: boost.yaml
+
+    - name: 'Install build packages'
+      yum:
+        name: "{{ item }}"
+      with_items:
+        - gcc
+        - yaml-cpp
+
+    - name: 'Clone puppet agent'
+      git:
+        repo: https://github.com/puppetlabs/puppet-agent.git
+        dest: puppet-agent
+        update: no
+
+    - name: 'Comment out internal build URL'
+      lineinfile:
+        dest: puppet-agent/configs/projects/puppet-agent.rb
+        regexp: "proj.register_rewrite_rule 'http', 'http://buildsources.delivery.puppetlabs.net'"
+        line: "#proj.register_rewrite_rule 'http', 'http://buildsources.delivery.puppetlabs.net'"
+
+    - name: 'Update virt-what checksum'
+      replace:
+        dest: puppet-agent/configs/components/virt-what.rb
+        regexp: "4d9bb5afc81de31f66443d8674bb3672"
+        replace: "955b57c4dee7efe88ecaa9072442e9df"
+
+    - name: 'Update libselinux checksum'
+      replace:
+        dest: puppet-agent/configs/components/ruby-selinux.rb
+        regexp: "f814c71fca5a85ebfeb81b57afed59db"
+        replace: "544f75aab11c2af352facc51af12029f"
+
+    - name: 'Bundle install'
+      command: bundle install
+      args:
+        chdir: 'puppet-agent'
+        creates: Gemfile.lock
+
+    - name: 'Build puppet-agent'
+      command: "bundle exec build puppet-agent el-{{ ansible_distribution_major_version }}-{{ ansible_architecture }} {{ ansible_fqdn }}"
+      args:
+        chdir: 'puppet-agent'
