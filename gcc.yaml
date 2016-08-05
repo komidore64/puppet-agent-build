@@ -1,0 +1,45 @@
+---
+- name: 'Make build directory'
+  file:
+    path: "{{ build_dir }}"
+    state: directory
+
+- name: 'Install build packages'
+  yum:
+    name: "{{ item }}"
+  with_items:
+    - gmp-devel
+    - mpfr-devel
+    - libmpc-devel
+
+- name: 'Download GCC'
+  get_url:
+    url: "http://www.netgull.com/gcc/releases/gcc-{{ gcc_version }}/gcc-{{ gcc_version }}.tar.gz"
+    dest: "{{ build_dir }}"
+    validate_certs: no
+
+- name: 'Untar GCC'
+  unarchive:
+    src: "{{ build_dir }}/gcc-{{ gcc_version }}.tar.gz"
+    dest: "{{ playbook_dir }}/{{ build_dir }}"
+    creates: "{{ build_dir }}/gcc-{{ gcc_version }}"
+
+- name: 'Cleanup from old installs'
+  command: make distclean
+  args:
+    chdir: "{{ build_dir }}/gcc-{{ gcc_version }}"
+
+- name: 'Configure GCC'
+  shell: "./configure --prefix={{ puppetlabs_build_dir }} --disable-multilib"
+  args:
+    chdir: "{{ build_dir }}/gcc-{{ gcc_version }}"
+
+- name: 'Run GCC make'
+  command: make
+  args:
+    chdir: "{{ build_dir }}/gcc-{{ gcc_version }}"
+
+- name: 'Run GCC make install'
+  command: make install
+  args:
+    chdir: "{{ build_dir }}/gcc-{{ gcc_version }}"

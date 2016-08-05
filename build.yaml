@@ -5,7 +5,9 @@
     puppetlabs_build_dir: /opt/pl-build-tools
     cmake_version: 3.2.3
     boost_version: 2014-10
+    gcc_version: 5.4.0
   tasks:
+    - include: gcc.yaml
     - include: cmake.yaml
     - include: boost.yaml
 
@@ -13,7 +15,6 @@
       yum:
         name: "{{ item }}"
       with_items:
-        - gcc
         - yaml-cpp
 
     - name: 'Clone puppet agent'
