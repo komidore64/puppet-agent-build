@@ -1,27 +1,23 @@
 ---
 - hosts: localhost
-  vars:
-    build_dir: build
-    puppetlabs_build_dir: /opt/pl-build-tools
-    cmake_version: 3.2.3
-    boost_version: 2014-10
-    gcc_version: 5.4.0
   tasks:
-    - include: gcc.yaml
-    - include: cmake.yaml
-    - include: boost.yaml
-
-    - name: 'Install build packages'
-      yum:
-        name: "{{ item }}"
-      with_items:
-        - yaml-cpp
-
     - name: 'Clone puppet agent'
       git:
         repo: https://github.com/puppetlabs/puppet-agent.git
         dest: puppet-agent
         update: no
+
+    - name: 'Clone vanagon'
+      git:
+        repo: https://github.com/puppetlabs/vanagon.git
+        dest: puppet-agent/vanagon
+        update: no
+
+    - name: 'Patch vanagon'
+      replace:
+        dest: puppet-agent/vanagon/lib/vanagon/platform/rpm.rb
+        regexp: "-bb"
+        replace: "-ba"
 
     - name: 'Comment out internal build URL'
       lineinfile:
@@ -29,25 +25,39 @@
         regexp: "proj.register_rewrite_rule 'http', 'http://buildsources.delivery.puppetlabs.net'"
         line: "#proj.register_rewrite_rule 'http', 'http://buildsources.delivery.puppetlabs.net'"
 
-    - name: 'Update virt-what checksum'
-      replace:
-        dest: puppet-agent/configs/components/virt-what.rb
-        regexp: "4d9bb5afc81de31f66443d8674bb3672"
-        replace: "955b57c4dee7efe88ecaa9072442e9df"
-
     - name: 'Update libselinux checksum'
       replace:
         dest: puppet-agent/configs/components/ruby-selinux.rb
         regexp: "f814c71fca5a85ebfeb81b57afed59db"
         replace: "544f75aab11c2af352facc51af12029f"
 
-    - name: 'Bundle install'
-      command: bundle install
+    - name: 'Install RVM gpg key'
+      shell: gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
+
+    - name: 'Install RVM gpg key'
+      shell: \curl -sSL https://get.rvm.io | bash -s stable --ruby
+
+    - name: 'Bundle update'
+      shell: "source ~/.rvm/scripts/rvm && VANAGON_LOCATION=file://{{ playbook_dir }}/../puppet-agent/vanagon bundle update"
       args:
         chdir: 'puppet-agent'
-        creates: Gemfile.lock
+        creates: 'Gemfile.lock'
 
     - name: 'Build puppet-agent'
-      command: "bundle exec build puppet-agent el-{{ ansible_distribution_major_version }}-{{ ansible_architecture }} {{ ansible_fqdn }}"
+      shell: "source ~/.rvm/scripts/rvm && VANAGON_SSH_KEY=~/.vagrant.d/insecure_private_key VANAGON_LOCATION=file://{{ playbook_dir }}/../puppet-agent/vanagon build puppet-agent el-{{ ansible_distribution_major_version }}-{{ ansible_architecture }} el7.example.com"
       args:
         chdir: 'puppet-agent'
+
+- hosts: el7
+  become: true
+  tasks:
+    - name: 'Find SRPM'
+      shell: find /var/tmp | grep "src.rpm$"
+      register: srpm_path
+
+    - name: 'Get SRPM from host'
+      fetch:
+        src: "{{ item }}"
+        dest: rpms/
+        flat: yes
+      with_items: "{{ srpm_path.stdout.split('\n') }}"

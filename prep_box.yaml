@@ -1,0 +1,29 @@
+---
+- hosts: all
+  become: true
+  vars:
+    build_dir: /opt/build
+    puppetlabs_build_dir: /opt/pl-build-tools
+    cmake_version: 3.2.3
+    boost_version: 1.58.0
+    gcc_version: 4.8.5
+    yaml_cpp_version: 0.5.3
+  tasks:
+    - name: 'Install build packages'
+      yum:
+        name: "{{ item }}"
+      with_items:
+        - gcc
+        - gcc-c++
+        - python-devel
+        - bzip2-devel
+
+    - include: gcc.yaml
+    - include: cmake.yaml
+    - include: boost.yaml
+    - include: yaml-cpp.yaml
+
+    - name: 'Deploy toolchain file'
+      copy:
+        src: pl-build-toolchain.cmake
+        dest: /opt/pl-build-tools

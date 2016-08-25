@@ -11,6 +11,8 @@
     - gmp-devel
     - mpfr-devel
     - libmpc-devel
+    - libzip-devel
+    - zip
 
 - name: 'Download GCC'
   get_url:
@@ -19,18 +21,13 @@
     validate_certs: no
 
 - name: 'Untar GCC'
-  unarchive:
-    src: "{{ build_dir }}/gcc-{{ gcc_version }}.tar.gz"
-    dest: "{{ playbook_dir }}/{{ build_dir }}"
+  command: "tar -zxvf {{ build_dir }}/gcc-{{ gcc_version }}.tar.gz"
+  args:
+    chdir: "{{ build_dir }}"
     creates: "{{ build_dir }}/gcc-{{ gcc_version }}"
 
-- name: 'Cleanup from old installs'
-  command: make distclean
-  args:
-    chdir: "{{ build_dir }}/gcc-{{ gcc_version }}"
-
 - name: 'Configure GCC'
-  shell: "./configure --prefix={{ puppetlabs_build_dir }} --disable-multilib"
+  shell: "./configure --prefix={{ puppetlabs_build_dir }} --disable-multilib --enable-shared"
   args:
     chdir: "{{ build_dir }}/gcc-{{ gcc_version }}"
 

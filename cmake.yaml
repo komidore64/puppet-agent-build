@@ -11,9 +11,9 @@
     validate_certs: no
 
 - name: 'Untar cmake'
-  unarchive:
-    src: "{{ build_dir }}/cmake-{{ cmake_version }}.tar.gz"
-    dest: "{{ playbook_dir }}/{{ build_dir }}"
+  command: "tar -zxvf {{ build_dir }}/cmake-{{ cmake_version }}.tar.gz"
+  args:
+    chdir: "{{ build_dir }}"
     creates: "{{ build_dir }}/cmake-{{ cmake_version }}"
 
 - name: 'Bootstrap cmake'

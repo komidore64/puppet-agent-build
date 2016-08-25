@@ -1,0 +1,42 @@
+---
+- name: 'Make build directory'
+  file:
+    path: "{{ build_dir }}"
+    state: directory
+
+- name: 'Download yaml-cpp'
+  get_url:
+    url: "https://github.com/jbeder/yaml-cpp/archive/release-{{ yaml_cpp_version }}.tar.gz"
+    dest: "{{ build_dir }}/yaml-cpp-{{ yaml_cpp_version }}.tar.gz"
+    validate_certs: no
+
+- name: 'Untar yaml-cpp'
+  command: "tar -zxvf {{ build_dir }}/yaml-cpp-{{ yaml_cpp_version }}.tar.gz"
+  args:
+    chdir: "{{ build_dir }}"
+    creates: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}"
+
+- name: 'Remove yaml-cpp build directory'
+  file:
+    state: absent
+    path: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}/build"
+
+- name: 'Make yaml-cpp build directory'
+  file:
+    state: directory
+    path: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}/build"
+
+- name: 'Cmake yaml-cpp'
+  shell: "{{ puppetlabs_build_dir }}/bin/cmake -DCMAKE_INSTALL_PREFIX={{ puppetlabs_build_dir }} -DCMAKE_C_FLAGS='-fPIC' -DCMAKE_CXX_FLAGS='-fPIC' .."
+  args:
+    chdir: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}/build"
+
+- name: 'Make yaml-cpp'
+  shell: "make"
+  args:
+    chdir: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}/build"
+
+- name: 'Install yaml-cpp'
+  shell: "make install"
+  args:
+    chdir: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}/build"
