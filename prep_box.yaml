@@ -9,6 +9,14 @@
     gcc_version: 4.8.5
     yaml_cpp_version: 0.5.3
   tasks:
+    - name: 'Install epel'
+      yum:
+        name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm
+        state: present
+
+    - name: 'Disable selinux'
+      command: setenforce 0
+
     - name: 'Install build packages'
       yum:
         name: "{{ item }}"
@@ -17,6 +25,7 @@
         - gcc-c++
         - python-devel
         - bzip2-devel
+        - libselinux-python
 
     - include: gcc.yaml
     - include: cmake.yaml

@@ -27,7 +27,7 @@
     creates: "{{ build_dir }}/gcc-{{ gcc_version }}"
 
 - name: 'Configure GCC'
-  shell: "./configure --prefix={{ puppetlabs_build_dir }} --disable-multilib --enable-shared"
+  shell: "./configure --prefix={{ puppetlabs_build_dir }} --disable-multilib"
   args:
     chdir: "{{ build_dir }}/gcc-{{ gcc_version }}"
 
@@ -40,3 +40,6 @@
   command: make install
   args:
     chdir: "{{ build_dir }}/gcc-{{ gcc_version }}"
+
+- name: 'Copy libstdc++ to /usr/lib64'
+  shell: "cp {{ puppetlabs_build_dir }}/lib64/libstdc++.so.6 /usr/lib64 -f"

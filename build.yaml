@@ -44,7 +44,7 @@
         creates: 'Gemfile.lock'
 
     - name: 'Build puppet-agent'
-      shell: "source ~/.rvm/scripts/rvm && VANAGON_SSH_KEY=~/.vagrant.d/insecure_private_key VANAGON_LOCATION=file://{{ playbook_dir }}/../puppet-agent/vanagon build puppet-agent el-{{ ansible_distribution_major_version }}-{{ ansible_architecture }} el7.example.com"
+      shell: "source ~/.rvm/scripts/rvm && VANAGON_SSH_KEY=~/.vagrant.d/insecure_private_key VANAGON_LOCATION=file://{{ playbook_dir }}/../puppet-agent/vanagon build puppet-agent el-6-{{ ansible_architecture }} el7.example.com"
       args:
         chdir: 'puppet-agent'
 
