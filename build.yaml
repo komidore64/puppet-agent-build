@@ -44,11 +44,11 @@
         creates: 'Gemfile.lock'
 
     - name: 'Build puppet-agent'
-      shell: "source ~/.rvm/scripts/rvm && VANAGON_SSH_KEY=~/.vagrant.d/insecure_private_key VANAGON_LOCATION=file://{{ playbook_dir }}/../puppet-agent/vanagon build puppet-agent el-6-{{ ansible_architecture }} el7.example.com"
+      shell: "source ~/.rvm/scripts/rvm && VANAGON_SSH_KEY=~/.vagrant.d/insecure_private_key VANAGON_LOCATION=file://{{ playbook_dir }}/../puppet-agent/vanagon build puppet-agent el-{{ rhel_version }}-{{ architecture }} {{ groups['build_host'][0] }}"
       args:
         chdir: 'puppet-agent'
 
-- hosts: el7
+- hosts: build_host
   become: true
   tasks:
     - name: 'Find SRPM'
