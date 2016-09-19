@@ -1,0 +1,22 @@
+---
+
+RedHatEnterpriseLinuxServer5:
+  - x86_64
+  - i386
+  - s390x
+  - ppc64
+  # - ppc # no rhel5 beaker machines currently
+  - ia64
+
+RedHatEnterpriseLinux6:
+  - x86_64
+  - i386
+  - s390x
+  - ppc64
+
+RedHatEnterpriseLinux7:
+  - x86_64
+  - s390x
+  - ppc64
+  - ppc64le
+  - aarch64

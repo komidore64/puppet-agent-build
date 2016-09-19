@@ -5,3 +5,7 @@ build/*
 *.swn
 *.swo
 *.pyc
+
+.ruby-version
+.ruby-gemset
+Gemfile.lock
