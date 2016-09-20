@@ -1,0 +1,4 @@
+278c278
+<   proj.register_rewrite_rule 'http', 'http://buildsources.delivery.puppetlabs.net'
+---
+>   # proj.register_rewrite_rule 'http', 'http://buildsources.delivery.puppetlabs.net'

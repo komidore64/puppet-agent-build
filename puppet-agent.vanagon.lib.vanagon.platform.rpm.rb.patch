@@ -1,0 +1,4 @@
+17c17
+<         "PATH=/opt/freeware/bin:$$PATH #{@rpmbuild} -bb --target #{@architecture} #{rpm_defines} $(tempdir)/rpmbuild/SPECS/#{project.name}.spec",
+---
+>         "PATH=/opt/freeware/bin:$$PATH #{@rpmbuild} -ba --target #{@architecture} #{rpm_defines} $(tempdir)/rpmbuild/SPECS/#{project.name}.spec",

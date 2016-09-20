@@ -1,10 +1,15 @@
-puppet-agent*
+puppet-agent
 build/*
 *.retry
 *.swp
 *.swn
 *.swo
 *.pyc
+
+rpms
+!rpms/file-list-for-rpm
+
+lib/inventory.ini
 
 .ruby-version
 .ruby-gemset

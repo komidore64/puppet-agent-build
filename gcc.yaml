@@ -4,27 +4,24 @@
     path: "{{ build_dir }}"
     state: directory
 
-- name: 'Install build packages'
-  yum:
-    name: "{{ item }}"
-  with_items:
-    - gmp-devel
-    - mpfr-devel
-    - libmpc-devel
-    - libzip-devel
-    - zip
-
 - name: 'Download GCC'
   get_url:
     url: "http://www.netgull.com/gcc/releases/gcc-{{ gcc_version }}/gcc-{{ gcc_version }}.tar.gz"
     dest: "{{ build_dir }}"
     validate_certs: no
+  retries: 5
 
 - name: 'Untar GCC'
   command: "tar -zxvf {{ build_dir }}/gcc-{{ gcc_version }}.tar.gz"
   args:
     chdir: "{{ build_dir }}"
     creates: "{{ build_dir }}/gcc-{{ gcc_version }}"
+
+- name: 'Download GCC prerequisites'
+  command: "./contrib/download_prerequisites"
+  args:
+    chdir: "{{ build_dir }}/gcc-{{ gcc_version }}"
+  retries: 5
 
 - name: 'Configure GCC'
   shell: "./configure --prefix={{ puppetlabs_build_dir }} --disable-multilib"
@@ -43,3 +40,4 @@
 
 - name: 'Copy libstdc++ to /usr/lib64'
   shell: "cp {{ puppetlabs_build_dir }}/lib64/libstdc++.so.6 /usr/lib64 -f"
+  when: ansible_architecture == 'x86_64'

@@ -9,6 +9,7 @@
     url: "https://github.com/jbeder/yaml-cpp/archive/release-{{ yaml_cpp_version }}.tar.gz"
     dest: "{{ build_dir }}/yaml-cpp-{{ yaml_cpp_version }}.tar.gz"
     validate_certs: no
+  retries: 5
 
 - name: 'Untar yaml-cpp'
   command: "tar -zxvf {{ build_dir }}/yaml-cpp-{{ yaml_cpp_version }}.tar.gz"
@@ -27,7 +28,13 @@
     path: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}/build"
 
 - name: 'Cmake yaml-cpp'
-  shell: "{{ puppetlabs_build_dir }}/bin/cmake -DCMAKE_INSTALL_PREFIX={{ puppetlabs_build_dir }} -DCMAKE_C_FLAGS='-fPIC' -DCMAKE_CXX_FLAGS='-fPIC' .."
+  shell: "{{ puppetlabs_build_dir }}/bin/cmake -DCMAKE_INSTALL_PREFIX={{ puppetlabs_build_dir }} -DCMAKE_C_FLAGS='-fPIC' -DCMAKE_CXX_FLAGS='-fPIC' -DBoost_INCLUDE_DIR={{ puppetlabs_build_dir }}/include .."
+  args:
+    chdir: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}/build"
+
+# TODO: switch to patch
+- name: 'cheesy hax0rz'
+  shell: "sed -i 's/-Wno-c99-extensions//' test/CMakeFiles/run-tests.dir/flags.make"
   args:
     chdir: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}/build"
 

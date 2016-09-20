@@ -1,60 +1,52 @@
 require 'yaml'
+require 'tempfile'
 require 'nokogiri'
+require 'fileutils'
 
 $beaker_jobs = []
-$completed_jobs = []
+$completed_jobs = {}
 
-namespace :beaker do
+task :machines do
 
-  task :machines do
-    matrix = YAML.load_file("beaker_matrix.yaml")
-    reservation_time = 356400 # in seconds; == 99 hours
+  unless system('klist')
+    puts 'No kerberos ticket found. Exiting.'
+    exit 1
+  end
 
-    matrix.each do |family, arches|
-      arches.each do |arch|
-        variant = (family =~ /5/) ? '' : ' --variant Server'
-        cmd = "bkr workflow-simple --family #{family} --task /distribution/install --reserve --reserve-duration #{reservation_time} --arch #{arch}" +
-          variant
+  matrix = YAML.load_file("beaker_matrix.yaml")
 
-        ret = `#{cmd}`
-        exit 1 if $?.to_i != 0
-
-        # there's some weirdness going on here with a delay. the first time ret
-        # is accessed it's empty? maybe the shell hasn't returned it's output
-        # quite yet?
-        ret.strip.split.last.gsub(/\['(.*)'\]/, "#{$1}")
-        ret.strip.split.last.gsub(/\['(.*)'\]/, "#{$1}")
-        ret.strip.split.last.gsub(/\['(.*)'\]/, "#{$1}")
-        ret.strip.split.last.gsub(/\['(.*)'\]/, "#{$1}")
-
-        parsed_job = ret.strip.split.last.gsub(/\['(.*)'\]/, "#{$1}")
-        puts "#{family}:#{arch} --> #{parsed_job}"
-        $beaker_jobs << parsed_job
-      end
-    end
-
-    until $beaker_jobs.empty?
-      print_when_available($beaker_jobs)
-      sleep 5
-    end
-
-    $completed_jobs.each do |j|
-      puts Nokogiri::Slop(`bkr job-results #{j}`).job.recipeSet.recipe['system']
+  matrix.each do |family, arches|
+    arches.each do |arch|
+      request_machine(family, arch)
     end
   end
 
-  def print_when_available(jobs)
-    jobs.each do |j|
-      status = Nokogiri::Slop(`bkr job-results #{j}`).job["status"]
-      if status == "Reserved"
-        puts "#{j} has completed"
-        $beaker_jobs -= [j]
-        $completed_jobs += [j]
-      else
-        puts "#{j} : #{status}"
-      end
-    end
+  until $beaker_jobs.empty?
+    store_when_available($beaker_jobs)
+    sleep 5
   end
 end
 
-task :default => 'beaker:machines'
+task :puppet_build => [:machines] do
+  ssh_known_hosts
+  begin
+    ansible_hosts = $completed_jobs.values.map { |str| str += " ansible_user=root" }
+    build_inventory = <<END_OF_INVENTORY
+[build_host]
+    #{ansible_hosts.join("\n")}
+
+[localhost]
+localhost ansible_connections=local
+END_OF_INVENTORY
+
+    tempfile = Tempfile.open("build_inventory")
+    tempfile.write(build_inventory)
+    tempfile.close
+
+    sleep 5 # hax
+    `ansible-playbook -i #{tempfile.path} prep_box.yaml`
+  ensure
+    tempfile.unlink
+    cleanup_ssh_known_hosts
+  end
+end

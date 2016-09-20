@@ -8,29 +8,39 @@
     boost_version: 1.58.0
     gcc_version: 4.8.5
     yaml_cpp_version: 0.5.3
+    swig_version: 3.0.10
   tasks:
     - name: 'Install epel'
       yum:
-        name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm
+        name: http://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm
         state: present
+        disable_gpg_check: yes
+      retries: 5
 
     - name: 'Disable selinux'
       command: setenforce 0
 
-    - name: 'Install build packages'
+    - name: 'Install packages'
       yum:
         name: "{{ item }}"
       with_items:
+        - make
         - gcc
         - gcc-c++
         - python-devel
         - bzip2-devel
         - libselinux-python
+        - wget
+        - bzip2
+        - zip
+        - pcre-devel
+      retries: 5
 
     - include: gcc.yaml
     - include: cmake.yaml
     - include: boost.yaml
     - include: yaml-cpp.yaml
+    - include: swig.yaml
 
     - name: 'Deploy toolchain file'
       copy:

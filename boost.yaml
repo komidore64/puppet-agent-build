@@ -9,6 +9,7 @@
     url: "https://sourceforge.net/projects/boost/files/boost/{{ boost_version }}/boost_{{ boost_version.replace('.', '_') }}.tar.gz/download"
     dest: "{{ build_dir }}/boost_{{ boost_version }}.tar.gz"
     validate_certs: no
+  retries: 5
 
 - name: 'Untar boost'
   command: "tar -zxvf {{ build_dir }}/boost_{{ boost_version }}.tar.gz"
