@@ -1,43 +1,43 @@
 ---
-- name: 'Make build directory'
+- name: make build directory
   file:
     path: "{{ build_dir }}"
     state: directory
 
-- name: 'Download GCC'
+- name: download gcc
   get_url:
-    url: "http://www.netgull.com/gcc/releases/gcc-{{ gcc_version }}/gcc-{{ gcc_version }}.tar.gz"
+    url: http://www.netgull.com/gcc/releases/gcc-{{ gcc_version }}/gcc-{{ gcc_version }}.tar.gz
     dest: "{{ build_dir }}"
     validate_certs: no
   retries: 5
 
-- name: 'Untar GCC'
+- name: untar gcc
   command: "tar -zxvf {{ build_dir }}/gcc-{{ gcc_version }}.tar.gz"
   args:
     chdir: "{{ build_dir }}"
     creates: "{{ build_dir }}/gcc-{{ gcc_version }}"
 
-- name: 'Download GCC prerequisites'
-  command: "./contrib/download_prerequisites"
+- name: download gcc prerequisites
+  command: ./contrib/download_prerequisites
   args:
     chdir: "{{ build_dir }}/gcc-{{ gcc_version }}"
   retries: 5
 
-- name: 'Configure GCC'
+- name: configure gcc
   shell: "./configure --prefix={{ puppetlabs_build_dir }} --disable-multilib"
   args:
     chdir: "{{ build_dir }}/gcc-{{ gcc_version }}"
 
-- name: 'Run GCC make'
+- name: run gcc make
   command: make
   args:
     chdir: "{{ build_dir }}/gcc-{{ gcc_version }}"
 
-- name: 'Run GCC make install'
+- name: run gcc make install
   command: make install
   args:
     chdir: "{{ build_dir }}/gcc-{{ gcc_version }}"
 
-- name: 'Copy libstdc++ to /usr/lib64'
+- name: copy libstdc++ to /usr/lib64
   shell: "cp {{ puppetlabs_build_dir }}/lib64/libstdc++.so.6 /usr/lib64 -f"
   when: ansible_architecture == 'x86_64'

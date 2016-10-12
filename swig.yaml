@@ -1,33 +1,33 @@
 ---
-- name: 'make build directory'
+- name: make build directory
   file:
     path: "{{ build_dir }}"
     state: directory
 
-- name: 'download swig'
+- name: download swig
   get_url:
-    url: "http://downloads.sourceforge.net/project/swig/swig/swig-{{ swig_version }}/swig-{{ swig_version }}.tar.gz"
+    url: http://downloads.sourceforge.net/project/swig/swig/swig-{{ swig_version }}/swig-{{ swig_version }}.tar.gz
     dest: "{{ build_dir }}"
     validate_certs: no
   retries: 5
 
-- name: 'untar swig'
+- name: untar swig
   command: "tar xvzf {{ build_dir }}/swig-{{ swig_version }}.tar.gz"
   args:
     chdir: "{{ build_dir }}"
     creates: "{{ build_dir }}/swig-{{ swig_version }}"
 
-- name: 'configure swig'
+- name: configure swig
   shell: "./configure --prefix={{ puppetlabs_build_dir }}"
   args:
     chdir: "{{ build_dir }}/swig-{{ swig_version }}"
 
-- name: 'run swig make'
+- name: run swig make
   command: make
   args:
     chdir: "{{ build_dir }}/swig-{{ swig_version }}"
 
-- name: 'run swig make install'
+- name: run swig make install
   command: make install
   args:
     chdir: "{{ build_dir }}/swig-{{ swig_version }}"

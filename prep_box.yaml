@@ -10,17 +10,17 @@
     yaml_cpp_version: 0.5.3
     swig_version: 3.0.10
   tasks:
-    - name: 'Install epel'
+    - name: install epel
       yum:
         name: http://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm
         state: present
         disable_gpg_check: yes
       retries: 5
 
-    - name: 'Disable selinux'
+    - name: disable selinux
       command: setenforce 0
 
-    - name: 'Install packages'
+    - name: install packages
       yum:
         name: "{{ item }}"
       with_items:
@@ -42,7 +42,7 @@
     - include: yaml-cpp.yaml
     - include: swig.yaml
 
-    - name: 'Deploy toolchain file'
+    - name: deploy toolchain file
       copy:
         src: pl-build-toolchain.cmake
         dest: /opt/pl-build-tools

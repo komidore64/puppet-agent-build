@@ -1,73 +1,78 @@
 ---
 - hosts: localhost
   tasks:
-    - name: 'clone puppet agent'
+    - name: clone puppet agent
       git:
         repo: https://github.com/puppetlabs/puppet-agent.git
         dest: "{{ playbook_dir }}/puppet-agent"
         update: no
         version: 1.7.0
 
-    - name: 'clone vanagon'
+    - name: clone vanagon
       git:
         repo: https://github.com/puppetlabs/vanagon.git
         dest: "{{ playbook_dir }}/puppet-agent/vanagon"
         update: no
         version: 0.8.2
 
-    - name: 'patch vanagon'
+    - name: patch vanagon
       patch:
-        src: "{{ playbook_dir }}/puppet-agent.vanagon.lib.vanagon.platform.rpm.rb.patch"
+        src: puppet-agent.vanagon.lib.vanagon.platform.rpm.rb.patch
         dest: "{{ playbook_dir }}/puppet-agent/vanagon/lib/vanagon/platform/rpm.rb"
 
-    - name: 'patch puppet-agent project'
+    - name: patch puppet-agent project
       patch:
-        src: "{{ playbook_dir }}/puppet-agent.configs.projects.puppet-agent.rb.patch"
+        src: puppet-agent.configs.projects.puppet-agent.rb.patch
         dest: "{{ playbook_dir }}/puppet-agent/configs/projects/puppet-agent.rb"
 
-    - name: 'patch el-5-i386 platform'
+    - name: patch el-5-i386 platform
       patch:
-        src: "{{ playbook_dir }}/puppet-agent.configs.platforms.el-5-i386.rb.patch"
+        src: puppet-agent.configs.platforms.el-5-i386.rb.patch
         dest: "{{ playbook_dir }}/puppet-agent/configs/platforms/el-5-i386.rb"
 
-    - name: 'patch el-5-x86_64 platform'
+    - name: patch el-5-x86_64 platform
       patch:
-        src: "{{ playbook_dir }}/puppet-agent.configs.platforms.el-5-x86_64.rb.patch"
+        src: puppet-agent.configs.platforms.el-5-x86_64.rb.patch
         dest: "{{ playbook_dir }}/puppet-agent/configs/platforms/el-5-x86_64.rb"
 
-    - name: 'patch ruby-selinux component'
+    - name: patch ruby-selinux component
       patch:
-        src: "{{ playbook_dir }}/puppet-agent.configs.components.ruby-selinux.rb.patch"
+        src: puppet-agent.configs.components.ruby-selinux.rb.patch
         dest: "{{ playbook_dir }}/puppet-agent/configs/components/ruby-selinux.rb"
 
-    - name: 'patch leatherman component'
+    - name: patch leatherman component
       patch:
-        src: "{{ playbook_dir }}/puppet-agent.configs.components.leatherman.rb.patch"
+        src: puppet-agent.configs.components.leatherman.rb.patch
         dest: "{{ playbook_dir }}/puppet-agent/configs/components/leatherman.rb"
 
-    - name: 'patch cpp-hocon component'
+    - name: patch cpp-hocon component
       patch:
-        src: "{{ playbook_dir }}/puppet-agent.configs.components.cpp-hocon.rb.patch"
+        src: puppet-agent.configs.components.cpp-hocon.rb.patch
         dest: "{{ playbook_dir }}/puppet-agent/configs/components/cpp-hocon.rb"
 
-    - name: 'patch cpp-pcp-client component'
+    - name: patch cpp-pcp-client component
       patch:
-        src: "{{ playbook_dir }}/puppet-agent.configs.components.cpp-pcp-client.rb.patch"
+        src: puppet-agent.configs.components.cpp-pcp-client.rb.patch
         dest: "{{ playbook_dir }}/puppet-agent/configs/components/cpp-pcp-client.rb"
 
-    - name: 'puppet-agent dir bundle update'
+    - name: patch facter component
+      patch:
+        src: puppet-agent.configs.components.facter.rb.patch
+        dest: "{{ playbook_dir }}/puppet-agent/configs/components/facter.rb"
+
+    - name: puppet-agent dir bundle update
       shell: "/bin/bash --login -c 'source ~/.rvm/scripts/rvm && rvm_is_not_a_function=0 rvm use 2.2.1@puppet-agent-build && VANAGON_LOCATION=file://{{ playbook_dir }}/puppet-agent/vanagon bundle update'"
       args:
         chdir: "{{ playbook_dir }}/puppet-agent"
-        creates: 'Gemfile.lock'
+        creates: Gemfile.lock
 
-    - name: 'vanagon dir bundle update'
+    - name: vanagon dir bundle update
       shell: "/bin/bash --login -c 'source ~/.rvm/scripts/rvm && rvm_is_not_a_function=0 rvm use 2.2.1@puppet-agent-build && VANAGON_LOCATION=file://{{ playbook_dir }}/puppet-agent/vanagon bundle update'"
       args:
         chdir: "{{ playbook_dir }}/puppet-agent/vanagon"
-        creates: 'Gemfile.lock'
+        creates: Gemfile.lock
 
-    - name: 'build puppet-agent'
+    - name: build puppet-agent
       shell: "/bin/bash --login -c 'source ~/.rvm/scripts/rvm && rvm_is_not_a_function=0 rvm use 2.2.1@puppet-agent-build && VANAGON_SSH_KEY=~/.ssh/id_rsa VANAGON_RETRY_COUNT=3 VANAGON_LOCATION=file://{{ playbook_dir }}/puppet-agent/vanagon bundle exec build puppet-agent el-{{ hostvars[item]['el_version'] }}-{{ hostvars[item]['el_arch'] }} {{ item }}'"
       args:
         chdir: "{{ playbook_dir }}/puppet-agent"
@@ -77,18 +82,18 @@
 - hosts: build_host
   become: true
   tasks:
-    - name: 'find srpm'
+    - name: find srpm
       shell: find /var/tmp | grep "src.rpm$"
       register: srpm_path
 
-    - name: 'create arch destination directory'
+    - name: create arch destination directory
       file:
-        dest: "rpms/{{ el_arch }}"
+        dest: "{{ playbook_dir }}/rpms/{{ el_arch }}"
         state: directory
 
-    - name: 'get srpm from host'
+    - name: get srpm from host
       fetch:
         src: "{{ item }}"
-        dest: "rpms/{{ el_arch }}/"
+        dest: "{{ playbook_dir }}/rpms/{{ el_arch }}/"
         flat: yes
       with_items: "{{ srpm_path.stdout.split('\n') }}"

@@ -2,3 +2,5 @@
 >         -DCURL_INCLUDE_DIR=../curl-7.46.0/include \
 >         -DCMAKE_CXX_FLAGS='-fPIC -L /opt/pl-build-tools/lib' \
 >         -DCMAKE_C_FLAGS='-fPIC -L /opt/pl-build-tools/lib' \
+111d113
+<       "#{test}"

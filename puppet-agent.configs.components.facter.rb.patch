@@ -1,0 +1,5 @@
+219,220c219
+<       "#{make} -j$(shell expr $(shell #{platform[:num_cores]}) + 1)",
+<       test
+---
+>       "#{make} -j$(shell expr $(shell #{platform[:num_cores]}) + 1)"
