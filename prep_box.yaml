@@ -10,13 +10,6 @@
     yaml_cpp_version: 0.5.3
     swig_version: 3.0.10
   tasks:
-    - name: install epel
-      yum:
-        name: http://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm
-        state: present
-        disable_gpg_check: yes
-      retries: 5
-
     - name: disable selinux
       command: setenforce 0
 
@@ -34,6 +27,8 @@
         - bzip2
         - zip
         - pcre-devel
+      register: result
+      until: result|succeeded
       retries: 5
 
     - include: gcc.yaml

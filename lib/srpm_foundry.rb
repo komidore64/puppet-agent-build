@@ -8,18 +8,30 @@ module PuppetAgentBuild
     MINIMUM_MEMORY = 1024 # in megabytes
 
     def initialize(beaker_machine_matrix)
+      raise 'no kerberos ticket found' unless system('klist') # bail early
+
       @matrix = beaker_machine_matrix
     end
 
-    def start
-      raise 'no kerberos ticket found' unless system('klist') # bail early
+    def run
+      prep_for_ansible
 
-      request_boxes
-      watch_jobs
-      prep
       ansible_prep_boxes
       ansible_build
-      cleanup
+      shutdown
+    end
+
+    def prep_for_ansible
+      request_boxes
+      watch_jobs
+      sleep 30 # sometimes the boxes are a little slow to get an ip addr
+
+      prep
+    end
+
+    def shutdown
+      clean_known_hosts
+      return_boxes
     end
 
     private
@@ -59,6 +71,20 @@ module PuppetAgentBuild
       ret.strip.split.last.gsub(/\['(.*)'\]/, "#{$1}")
     end
 
+    def return_boxes
+      @boxes.each do |box|
+        return_box(box)
+      end
+    end
+
+    def return_box(box)
+      hostname = box[0]
+      cmd = "bkr system-release '#{hostname}'"
+      ret = shell(cmd)
+      puts "#{hostname} returned to beaker"
+      @boxes -= box
+    end
+
     def watch_jobs
       @boxes = []
       until @jobs.empty?
@@ -73,7 +99,7 @@ module PuppetAgentBuild
           else
             puts "#{job} : #{status}"
           end
-          sleep 5 # don't ddos beaker
+          sleep 5
         end
       end
     end
@@ -131,7 +157,7 @@ module PuppetAgentBuild
 
       only_hostnames.each do |hostname|
         ind = known_hosts.find_index { |line| line.include?(hostname) }
-        known_hosts.delete_at(i) unless ind.nil?
+        known_hosts.delete_at(ind) unless ind.nil?
       end
 
       File.open(known_hosts_filepath, "w") do |file|

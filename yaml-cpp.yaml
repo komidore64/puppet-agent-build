@@ -9,6 +9,8 @@
     url: https://github.com/jbeder/yaml-cpp/archive/release-{{ yaml_cpp_version }}.tar.gz
     dest: "{{ build_dir }}/yaml-cpp-{{ yaml_cpp_version }}.tar.gz"
     validate_certs: no
+  register: result
+  until: result|succeeded
   retries: 5
 
 - name: untar yaml-cpp

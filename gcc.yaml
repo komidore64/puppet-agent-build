@@ -9,6 +9,8 @@
     url: http://www.netgull.com/gcc/releases/gcc-{{ gcc_version }}/gcc-{{ gcc_version }}.tar.gz
     dest: "{{ build_dir }}"
     validate_certs: no
+  register: result
+  until: result|succeeded
   retries: 5
 
 - name: untar gcc
@@ -21,6 +23,8 @@
   command: ./contrib/download_prerequisites
   args:
     chdir: "{{ build_dir }}/gcc-{{ gcc_version }}"
+  register: result
+  until: result|succeeded
   retries: 5
 
 - name: configure gcc
@@ -28,6 +32,18 @@
   args:
     chdir: "{{ build_dir }}/gcc-{{ gcc_version }}"
 
+- name: patch gcc/gmp/configure.in
+  patch:
+    src: opt.build.gcc.gmp.configure.in.patch
+    dest: "{{ build_dir }}/gcc-{{ gcc_version }}/gmp/configure.in"
+
+- name: patch gcc/gmp/configure
+  patch:
+    src: opt.build.gcc.gmp.configure.patch
+    dest: "{{ build_dir }}/gcc-{{ gcc_version }}/gmp/configure"
+
+  # FIXME: for some reason, this bombs out when ansible runs the command, but it
+  # runs fine if i ssh in and run it by hand.
 - name: run gcc make
   command: make
   args:

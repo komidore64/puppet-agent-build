@@ -37,3 +37,17 @@ Lastly, we run the build playbook that creates and exports the SRPM to the local
 ```
 ansible-playbook -i build_inventory build.yaml
 ```
+
+## SRPM_Foundry
+
+work in progress
+
+to get request a beaker machine you'll need a valid kerberos ticket (from `kinit`) and the beaker cli already set up
+
+```
+# in the puppet-agent-build dir
+$ bundle exec pry -r./lib/srpm_foundry.rb
+pry> foundry = PuppetAgentBuild::SRPMFoundry.new({"RedHatEnterpriseLinux7" => [:x86_64]})
+# => <new object>
+pry> foundry.prep_for_ansible
+```

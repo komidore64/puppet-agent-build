@@ -9,6 +9,8 @@
     url: https://cmake.org/files/v3.2/cmake-{{ cmake_version }}.tar.gz
     dest: "{{ build_dir }}"
     validate_certs: no
+  register: result
+  until: result|succeeded
   retries: 5
 
 - name: Untar cmake

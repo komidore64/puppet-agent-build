@@ -6,9 +6,11 @@
 
 - name: download boost
   get_url:
-    url: https://sourceforge.net/projects/boost/files/boost/{{ boost_version }}/boost_{{ boost_version.replace('.', '_') }}.tar.gz/download
+    url: http://downloads.sourceforge.net/project/boost/boost/{{ boost_version }}/boost_{{ boost_version.replace('.', '_') }}.tar.gz
     dest: "{{ build_dir }}/boost_{{ boost_version }}.tar.gz"
     validate_certs: no
+  register: result
+  until: result|succeeded
   retries: 5
 
 - name: untar boost
@@ -17,11 +19,13 @@
     chdir: "{{ build_dir }}"
     creates: "{{ build_dir }}/boost_{{ boost_version.replace('.', '_') }}"
 
+  # FIXME: this isn't working for s390x
 - name: bootstrap boost
   command: ./bootstrap.sh
   args:
     chdir: "{{ build_dir }}/boost_{{ boost_version.replace('.', '_') }}"
 
+  # FIXME: this isn't working for s390x
 - name: install boost
   shell: "./b2 --prefix={{ puppetlabs_build_dir }} cxxflags=-fPIC cflags=-fPIC -a install"
   args:
