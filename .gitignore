@@ -10,7 +10,3 @@ rpms
 !rpms/file-list-for-rpm
 
 lib/inventory.ini
-
-.ruby-version
-.ruby-gemset
-Gemfile.lock
