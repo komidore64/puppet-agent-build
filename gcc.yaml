@@ -42,8 +42,6 @@
     src: opt.build.gcc.gmp.configure.patch
     dest: "{{ build_dir }}/gcc-{{ gcc_version }}/gmp/configure"
 
-  # FIXME: for some reason, this bombs out when ansible runs the command, but it
-  # runs fine if i ssh in and run it by hand.
 - name: run gcc make
   command: make
   args:
@@ -53,6 +51,16 @@
   command: make install
   args:
     chdir: "{{ build_dir }}/gcc-{{ gcc_version }}"
+
+  # For reasons unknown, building our own gcc on s390x generates binaries with
+  # the s390x-ibm-linux-gnu- prefix, but Vangon's building scripts only look
+  # for s390x-linux-gnu- prefixed binaries, so here we're symlinking what
+  # Vanagon is looking for.
+- name: janky patch s390x gcc binaries
+  command: /bin/bash -c 'for bin in s390x-ibm-linux-gnu-*; do ln -sf ${bin} ${bin/#s390x-ibm/s390x}; done'
+  args:
+    chdir: "{{ puppetlabs_build_dir }}/bin"
+  when: ansible_architecture == 's390x'
 
 - name: copy libstdc++ to /usr/lib64
   shell: "cp {{ puppetlabs_build_dir }}/lib64/libstdc++.so.6 /usr/lib64 -f"

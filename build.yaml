@@ -35,6 +35,11 @@
         src: puppet-agent.configs.platforms.el-5-x86_64.rb.patch
         dest: "{{ playbook_dir }}/puppet-agent/configs/platforms/el-5-x86_64.rb"
 
+    - name: patch el-7-s390x platform
+      patch:
+        src: puppet-agent.configs.platforms.el-7-s390x.rb.patch
+        dest: "{{ playbook_dir }}/puppet-agent/configs/platforms/el-7-s390x.rb"
+
     - name: patch ruby-selinux component
       patch:
         src: puppet-agent.configs.components.ruby-selinux.rb.patch
@@ -59,6 +64,16 @@
       patch:
         src: puppet-agent.configs.components.facter.rb.patch
         dest: "{{ playbook_dir }}/puppet-agent/configs/components/facter.rb"
+
+    - name: patch ruby-augeas
+      patch:
+        src: puppet-agent.configs.components.ruby-augeas.rb.patch
+        dest: "{{ playbook_dir }}/puppet-agent/configs/components/ruby-augeas.rb"
+
+    - name: patch ruby-shadow
+      patch:
+        src: puppet-agent.configs.components.ruby-shadow.rb.patch
+        dest: "{{ playbook_dir }}/puppet-agent/configs/components/ruby-shadow.rb"
 
     - name: puppet-agent dir bundle update
       shell: "/bin/bash --login -c 'source ~/.rvm/scripts/rvm && rvm_is_not_a_function=0 rvm use 2.2.1@puppet-agent-build && VANAGON_LOCATION=file://{{ playbook_dir }}/puppet-agent/vanagon bundle update'"

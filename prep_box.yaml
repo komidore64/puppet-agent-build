@@ -18,6 +18,7 @@
         name: "{{ item }}"
       with_items:
         - make
+        - imake
         - gcc
         - gcc-c++
         - python-devel
@@ -27,6 +28,7 @@
         - bzip2
         - zip
         - pcre-devel
+        - vim # for if/when i need to ssh in
       register: result
       until: result|succeeded
       retries: 5

@@ -1,10 +1,10 @@
 ---
-- name: Make build directory
+- name: make build directory
   file:
     path: "{{ build_dir }}"
     state: directory
 
-- name: Download Cmake
+- name: download cmake
   get_url:
     url: https://cmake.org/files/v3.2/cmake-{{ cmake_version }}.tar.gz
     dest: "{{ build_dir }}"
@@ -13,23 +13,23 @@
   until: result|succeeded
   retries: 5
 
-- name: Untar cmake
+- name: untar cmake
   command: "tar -zxvf {{ build_dir }}/cmake-{{ cmake_version }}.tar.gz"
   args:
     chdir: "{{ build_dir }}"
     creates: "{{ build_dir }}/cmake-{{ cmake_version }}"
 
-- name: Bootstrap cmake
+- name: bootstrap cmake
   shell: "./bootstrap --prefix={{ puppetlabs_build_dir }}"
   args:
     chdir: "{{ build_dir }}/cmake-{{ cmake_version }}"
 
-- name: Run Cmake make
+- name: run cmake make
   command: make
   args:
     chdir: "{{ build_dir }}/cmake-{{ cmake_version }}"
 
-- name: Run Cmake make install
+- name: run cmake make install
   command: make install
   args:
     chdir: "{{ build_dir }}/cmake-{{ cmake_version }}"

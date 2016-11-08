@@ -1,0 +1,10 @@
+6,7c6,7
+<   plat.add_build_repository "http://pl-build-tools.delivery.puppetlabs.net/yum/el/7/s390x/pl-build-tools-s390x.repo"
+<   plat.add_build_repository "http://pl-build-tools.delivery.puppetlabs.net/yum/el/7/x86_64/pl-build-tools-x86_64.repo"
+---
+>   # plat.add_build_repository "http://pl-build-tools.delivery.puppetlabs.net/yum/el/7/s390x/pl-build-tools-s390x.repo"
+>   # plat.add_build_repository "http://pl-build-tools.delivery.puppetlabs.net/yum/el/7/x86_64/pl-build-tools-x86_64.repo"
+10c10
+<   plat.cross_compiled true
+---
+>   plat.cross_compiled false

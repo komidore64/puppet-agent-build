@@ -34,11 +34,10 @@
   args:
     chdir: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}/build"
 
-# TODO: switch to patch
 - name: cheesy hax0rz
-  shell: "sed -i 's/-Wno-c99-extensions//' test/CMakeFiles/run-tests.dir/flags.make"
-  args:
-    chdir: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}/build"
+  replace:
+    dest: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}/build/test/CMakeFiles/run-tests.dir/flags.make"
+    regexp: "-Wno-c99-extensions" # no "replace" field tells ansible to simply delete the match
 
 - name: make yaml-cpp
   shell: make
