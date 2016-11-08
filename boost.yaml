@@ -19,14 +19,26 @@
     chdir: "{{ build_dir }}"
     creates: "{{ build_dir }}/boost_{{ boost_version.replace('.', '_') }}"
 
-  # FIXME: this isn't working for s390x
 - name: bootstrap boost
-  command: ./bootstrap.sh
+  command: "./bootstrap.sh --prefix={{ puppetlabs_build_dir }}"
   args:
     chdir: "{{ build_dir }}/boost_{{ boost_version.replace('.', '_') }}"
 
-  # FIXME: this isn't working for s390x
+- name: tell boost to use our locally-built gcc
+  replace:
+    dest: "{{ build_dir }}/boost_{{ boost_version.replace('.', '_') }}/project-config.jam"
+    regexp: "using gcc ; "
+    replace: "using gcc : : /opt/pl-build-tools/bin/g++ ; "
+
 - name: install boost
-  shell: "./b2 --prefix={{ puppetlabs_build_dir }} cxxflags=-fPIC cflags=-fPIC -a install"
+  shell: "./b2 cxxflags=-fPIC cflags=-fPIC -a install"
   args:
     chdir: "{{ build_dir }}/boost_{{ boost_version.replace('.', '_') }}"
+  when: ansible_architecture != 's390x'
+
+- name: install boost for s390x
+  shell: "./b2 cxxflags=-fPIC cflags=-fPIC -a install"
+  args:
+    chdir: "{{ build_dir }}/boost_{{ boost_version.replace('.', '_') }}"
+  when: ansible_architecture == 's390x'
+  ignore_errors: true # this was literally the solution recommended to me in #boost on freenode :(
