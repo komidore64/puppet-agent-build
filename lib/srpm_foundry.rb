@@ -40,10 +40,7 @@ module PuppetAgentBuild
       @jobs = []
       @matrix.each do |family, arches|
         arches.each do |arch|
-          job = request_box(family, arch)
-          next if job.nil?
-          puts "#{family}:#{arch} --> #{job}"
-          @jobs << [ job, versionify(family), arch ]
+          request_box(family, arch)
         end
       end
     end
@@ -57,7 +54,7 @@ module PuppetAgentBuild
         (family.include?('5') ? '' : '--variant Server ') +
         "--hostrequire='memory > #{MINIMUM_MEMORY}'"
       ret = shell(cmd, :error_on_nonzero => false)
-      return nil if $?.to_i != 0
+      return unless $?.to_i.zero?
 
       # there's some weirdness going on here with a delay. the first time ret
       # is accessed it's empty? maybe the shell hasn't returned it's output
@@ -68,7 +65,10 @@ module PuppetAgentBuild
       ret.strip.split.last.gsub(/\['(.*)'\]/, "#{$1}")
 
       # is that your final answer?
-      ret.strip.split.last.gsub(/\['(.*)'\]/, "#{$1}")
+      job = ret.strip.split.last.gsub(/\['(.*)'\]/, "#{$1}")
+
+      puts "#{family}:#{arch} --> #{job}"
+      @jobs << [ job, family, arch ]
     end
 
     def return_boxes
@@ -95,7 +95,11 @@ module PuppetAgentBuild
             system = ret.job.recipeSet.recipe['system']
             @jobs -= [ [ job, family, arch ] ]
             @boxes << [ system, family, arch ]
-            puts "#{family}:#{arch} has completed (#{@boxes.size} of #{@jobs.size + @boxes.size}) => #{system}"
+            puts "#{family}:#{arch} is reserved (#{@boxes.size} of #{@jobs.size + @boxes.size}) => #{system}"
+          elsif status == "Completed"
+            puts "#{family}:#{arch} has completed prematurely. requesting another."
+            request_box(family, arch) # ask for another box
+            @jobs -= [ [ job, family, arch ] ] # remove the job that just completed
           else
             puts "#{job} : #{status}"
           end
@@ -120,8 +124,8 @@ module PuppetAgentBuild
     def generate_inventory
       FileUtils.rm(inventory_filepath) if File.exist?(inventory_filepath)
 
-      build_host_lines = @boxes.map do |hostname, version, arch|
-        "#{hostname} ansible_user=root el_version=#{version} el_arch=#{arch}\n"
+      build_host_lines = @boxes.map do |hostname, family, arch|
+        "#{hostname} ansible_user=root el_version=#{versionify(family)} el_arch=#{arch}\n"
       end
 
       File.open(inventory_filepath, "w") do |file|
