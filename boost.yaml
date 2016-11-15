@@ -29,6 +29,14 @@
     dest: "{{ build_dir }}/boost_{{ boost_version.replace('.', '_') }}/project-config.jam"
     regexp: "using gcc ; "
     replace: "using gcc : : /opt/pl-build-tools/bin/g++ ; "
+  when: ansible_architecture != 's390x'
+
+- name: tell boost to use our locally-built cross-compiled gcc for s390x
+  replace:
+    dest: "{{ build_dir}}/boost_{{ boost_version.replace('.', '_') }}/project-config.jam"
+    regexp: "using gcc ; "
+    replace: "using gcc : : /opt/pl-build-tools/bin/s390x-ibm-linux-gnu-g++ ; "
+  when: ansible_architecture == 's390x'
 
 - name: install boost
   shell: "./b2 cxxflags=-fPIC cflags=-fPIC -a install"

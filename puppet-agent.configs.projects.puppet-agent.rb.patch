@@ -1,4 +1,9 @@
-278c278
+95c95,96
+<   platform_triple = "s390x-linux-gnu" if platform.architecture == "s390x"
+---
+>   platform_triple = "powerpc64-unknown-linux-gnu" if platform.architecture == "ppc64"
+>   platform_triple = "s390x-ibm-linux-gnu" if platform.architecture == "s390x"
+278c279
 <   proj.register_rewrite_rule 'http', 'http://buildsources.delivery.puppetlabs.net'
 ---
 >   # proj.register_rewrite_rule 'http', 'http://buildsources.delivery.puppetlabs.net'

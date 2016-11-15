@@ -6,7 +6,7 @@
 
 - name: download swig
   get_url:
-    url: http://downloads.sourceforge.net/project/swig/swig/swig-{{ swig_version }}/swig-{{ swig_version }}.tar.gz
+    url: "http://downloads.sourceforge.net/project/swig/swig/swig-{{ swig_version }}/swig-{{ swig_version }}.tar.gz"
     dest: "{{ build_dir }}"
     validate_certs: no
   register: result

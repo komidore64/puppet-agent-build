@@ -9,4 +9,4 @@
 234c235
 <   unless platform.is_windows? || platform.is_cross_compiled_linux? || platform.architecture == 'sparc'
 ---
->   unless platform.is_windows? || platform.is_cross_compiled_linux? || platform.architecture == 'sparc' || platform.architecture = 's390x'
+>   unless platform.is_windows? || platform.is_cross_compiled_linux? || platform.architecture == 'sparc' || platform.architecture == 's390x'

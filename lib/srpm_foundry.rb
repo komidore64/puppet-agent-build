@@ -5,7 +5,7 @@ module PuppetAgentBuild
   class SRPMFoundry
 
     RESERVATION_TIME = 356400 # in seconds; == 99 hours
-    MINIMUM_MEMORY = 1024 # in megabytes
+    MINIMUM_MEMORY = 2048 # in megabytes
 
     def initialize(beaker_machine_matrix)
       raise 'no kerberos ticket found' unless system('klist') # bail early
@@ -91,15 +91,19 @@ module PuppetAgentBuild
         @jobs.each do |job, family, arch|
           ret = Nokogiri::Slop(shell("bkr job-results #{job}"))
           status = ret.job["status"]
-          if status == "Reserved"
+          case status.lowercase
+          when "reserved"
             system = ret.job.recipeSet.recipe['system']
             @jobs -= [ [ job, family, arch ] ]
             @boxes << [ system, family, arch ]
             puts "#{family}:#{arch} is reserved (#{@boxes.size} of #{@jobs.size + @boxes.size}) => #{system}"
-          elsif status == "Completed"
+          when "completed"
             puts "#{family}:#{arch} has completed prematurely. requesting another."
             request_box(family, arch) # ask for another box
             @jobs -= [ [ job, family, arch ] ] # remove the job that just completed
+          when "aborted"
+            puts "#{family}:#{arch} has been aborted for an unknown reason. removing."
+            @jobs -= [ [ job, family, arch ] ]
           else
             puts "#{job} : #{status}"
           end
