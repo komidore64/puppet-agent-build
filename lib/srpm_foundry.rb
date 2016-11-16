@@ -5,7 +5,7 @@ module PuppetAgentBuild
   class SRPMFoundry
 
     RESERVATION_TIME = 356400 # in seconds; == 99 hours
-    MINIMUM_MEMORY = 2048 # in megabytes
+    MINIMUM_MEMORY = 1024 # in megabytes
 
     def initialize(beaker_machine_matrix)
       raise 'no kerberos ticket found' unless system('klist') # bail early
@@ -89,27 +89,44 @@ module PuppetAgentBuild
       @boxes = []
       until @jobs.empty?
         @jobs.each do |job, family, arch|
-          ret = Nokogiri::Slop(shell("bkr job-results #{job}"))
-          status = ret.job["status"]
-          case status.lowercase
-          when "reserved"
-            system = ret.job.recipeSet.recipe['system']
-            @jobs -= [ [ job, family, arch ] ]
-            @boxes << [ system, family, arch ]
-            puts "#{family}:#{arch} is reserved (#{@boxes.size} of #{@jobs.size + @boxes.size}) => #{system}"
-          when "completed"
-            puts "#{family}:#{arch} has completed prematurely. requesting another."
-            request_box(family, arch) # ask for another box
-            @jobs -= [ [ job, family, arch ] ] # remove the job that just completed
-          when "aborted"
-            puts "#{family}:#{arch} has been aborted for an unknown reason. removing."
-            @jobs -= [ [ job, family, arch ] ]
-          else
-            puts "#{job} : #{status}"
-          end
+          check_job(job, family, arch)
           sleep 5
         end
       end
+    end
+
+    def check_job(job, family, arch)
+      ret = Nokogiri::Slop(shell("bkr job-results #{job}"))
+
+      status = ret.job["status"].downcase
+      system = ret.job.recipeSet.recipe['system']
+      case status
+      when "reserved"
+        reserved(job, family, arch, system)
+      when "completed"
+        completed(job, family, arch)
+      when "aborted","cancelled"
+        killed(job, family, arch, status)
+      else
+        puts "#{job} : #{status}"
+      end
+    end
+
+    def reserved(job, family, arch, system)
+      @jobs -= [ [ job, family, arch ] ]
+      @boxes << [ system, family, arch ]
+      puts "#{family}:#{arch} is reserved (#{@boxes.size} of #{@jobs.size + @boxes.size}) => #{system}"
+    end
+
+    def completed(job, family, arch)
+      puts "#{family}:#{arch} has completed prematurely. requesting another..."
+      request_box(family, arch) # ask for another box
+      @jobs -= [ [ job, family, arch ] ] # remove the job that just completed
+    end
+
+    def killed(job, family, arch, status)
+      puts "#{family}:#{arch} has been #{status}. removing..."
+      @jobs -= [ [ job, family, arch ] ]
     end
 
     def prep
