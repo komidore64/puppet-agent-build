@@ -6,11 +6,11 @@
 
 - name: download cmake
   get_url:
-    url: https://cmake.org/files/v3.2/cmake-{{ cmake_version }}.tar.gz
+    url: "https://cmake.org/files/v3.2/cmake-{{ cmake_version }}.tar.gz"
     dest: "{{ build_dir }}"
     validate_certs: no
-  register: result
-  until: result|succeeded
+  register: download_cmake_result
+  until: download_cmake_result | succeeded
   retries: 5
 
 - name: untar cmake

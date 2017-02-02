@@ -43,6 +43,11 @@
         dest: "{{ playbook_dir }}/puppet-agent/configs/platforms/el-7-x86_64.rb"
 
     # s390x
+    - name: patch el-6-s390x platform
+      patch:
+        src: puppet-agent.configs.platforms.el-6-s390x.rb.patch
+        dest: "{{ playbook_dir }}/puppet-agent/configs/platforms/el-6-s390x.rb"
+
     - name: patch el-7-s390x platform
       patch:
         src: puppet-agent.configs.platforms.el-7-s390x.rb.patch

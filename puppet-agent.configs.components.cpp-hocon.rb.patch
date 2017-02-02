@@ -1,3 +1,8 @@
 48a49,50
 >         -DCMAKE_CXX_FLAGS='-fPIC -L /opt/pl-build-tools/lib' \
 >         -DCMAKE_C_FLAGS='-fPIC -L /opt/pl-build-tools/lib' \
+67,68c69
+<       "#{make} -j$(shell expr $(shell #{platform[:num_cores]}) + 1)",
+<       "#{test}"
+---
+>       "#{make} -j$(shell expr $(shell #{platform[:num_cores]}) + 1)"

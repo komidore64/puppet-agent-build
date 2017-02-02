@@ -2,14 +2,13 @@ require 'nokogiri'
 require 'pty'
 
 module PuppetAgentBuild
-  class SRPMFoundry
+  class Foundry
 
     RESERVATION_TIME = 356400 # in seconds; == 99 hours
     MINIMUM_MEMORY = 1024 # in megabytes
 
     def initialize(beaker_machine_matrix)
       raise 'no kerberos ticket found' unless system('klist') # bail early
-
       @matrix = beaker_machine_matrix
     end
 
@@ -27,6 +26,11 @@ module PuppetAgentBuild
       sleep 30 # sometimes the boxes are a little slow to get an ip addr
 
       prep
+    end
+
+    def ansible
+      ansible_prep_boxes
+      ansible_build
     end
 
     def shutdown
@@ -65,68 +69,75 @@ module PuppetAgentBuild
       ret.strip.split.last.gsub(/\['(.*)'\]/, "#{$1}")
 
       # is that your final answer?
-      job = ret.strip.split.last.gsub(/\['(.*)'\]/, "#{$1}")
+      job_id = ret.strip.split.last.gsub(/\['(.*)'\]/, "#{$1}")
 
-      puts "#{family}:#{arch} --> #{job}"
-      @jobs << [ job, family, arch ]
+      puts "#{family}:#{arch} --> #{job_id}"
+      @jobs << Job.new(job_id, family, arch)
     end
 
     def return_boxes
-      @boxes.each do |box|
-        return_box(box)
+      @jobs.each do |job|
+        return_box(job)
       end
     end
 
-    def return_box(box)
-      hostname = box[0]
+    def return_box(job)
+      hostname = job.host
       cmd = "bkr system-release '#{hostname}'"
       ret = shell(cmd)
       puts "#{hostname} returned to beaker"
-      @boxes -= box
+      @jobs -= [ job ]
     end
 
     def watch_jobs
-      @boxes = []
-      until @jobs.empty?
-        @jobs.each do |job, family, arch|
-          check_job(job, family, arch)
+      until running_jobs.empty?
+        running_jobs.each do |job|
+          check_job(job)
           sleep 5
         end
       end
     end
 
-    def check_job(job, family, arch)
-      ret = Nokogiri::Slop(shell("bkr job-results #{job}"))
+    def check_job(job)
+      ret = Nokogiri::Slop(shell("bkr job-results #{job.id}")) # nokogiri told me to never use slop ... ¯\_(ツ)_/¯
 
-      status = ret.job["status"].downcase
+      job.last_status = ret.job["status"].downcase
       system = ret.job.recipeSet.recipe['system']
-      case status
+      case job.last_status
       when "reserved"
-        reserved(job, family, arch, system)
+        job.host = system
+        reserved(job)
       when "completed"
-        completed(job, family, arch)
+        completed(job)
       when "aborted","cancelled"
-        killed(job, family, arch, status)
+        killed(job)
       else
-        puts "#{job} : #{status}"
+        puts "#{job.id} : #{job.last_status}"
       end
     end
 
-    def reserved(job, family, arch, system)
-      @jobs -= [ [ job, family, arch ] ]
-      @boxes << [ system, family, arch ]
-      puts "#{family}:#{arch} is reserved (#{@boxes.size} of #{@jobs.size + @boxes.size}) => #{system}"
+    def reserved(job)
+      puts "#{job.family}:#{job.arch} is reserved (#{jobs_left}) => #{job.host}"
+      # don't remove a job once it's reserved
     end
 
-    def completed(job, family, arch)
-      puts "#{family}:#{arch} has completed prematurely. requesting another..."
-      request_box(family, arch) # ask for another box
-      @jobs -= [ [ job, family, arch ] ] # remove the job that just completed
+    def completed(job)
+      puts "#{job.family}:#{job.arch} has completed prematurely. requesting another..."
+      request_box(job.family, job.arch)
+      @jobs -= [ job ]
     end
 
-    def killed(job, family, arch, status)
-      puts "#{family}:#{arch} has been #{status}. removing..."
-      @jobs -= [ [ job, family, arch ] ]
+    def killed(job)
+      puts "#{job.family}:#{job.arch} has been #{job.last_status}. removing..."
+      @jobs -= [ job ]
+    end
+
+    def jobs_left
+      "#{@jobs.select { |job| job.last_status == "reserved" }.size} of #{@jobs.size}"
+    end
+
+    def running_jobs
+      @jobs.select { |job| job.last_status != "reserved" }
     end
 
     def prep
@@ -145,8 +156,8 @@ module PuppetAgentBuild
     def generate_inventory
       FileUtils.rm(inventory_filepath) if File.exist?(inventory_filepath)
 
-      build_host_lines = @boxes.map do |hostname, family, arch|
-        "#{hostname} ansible_user=root el_version=#{versionify(family)} el_arch=#{arch}\n"
+      build_host_lines = @jobs.map do |job|
+        "#{job.host} ansible_user=root el_version=#{job.version} el_arch=#{job.arch}\n"
       end
 
       File.open(inventory_filepath, "w") do |file|
@@ -159,56 +170,43 @@ module PuppetAgentBuild
     end
 
     def only_hostnames
-      @boxes.map { |i| i[0] }
+      @jobs.map { |job| job.host }
     end
 
     def prep_known_hosts
-      clean_known_hosts
-
-      only_hostnames.each do |host|
-        key = `ssh-keyscan #{host}`
+      @jobs.each do |job|
+        keys = `ssh-keyscan #{job.host}`
         File.open(known_hosts_filepath, "a") do |file|
-          file.puts(key)
+          file.puts(keys)
         end
+        job.keys = keys.split("\n")
       end
     end
 
     def clean_known_hosts
+      shell("cp #{known_hosts_filepath} #{known_hosts_filepath}.backup")
       known_hosts = []
 
       File.foreach(known_hosts_filepath) do |line|
-        known_hosts << line
+        known_hosts << line.strip
       end
 
-      only_hostnames.each do |hostname|
-        ind = known_hosts.find_index { |line| line.include?(hostname) }
-        known_hosts.delete_at(ind) unless ind.nil?
+      @jobs.each do |job|
+        known_hosts -= job.keys
       end
 
       File.open(known_hosts_filepath, "w") do |file|
-        file.write(known_hosts.join(""))
+        file.write(known_hosts.join("\n"))
       end
+      shell("rm #{known_hosts_filepath}.backup")
     end
 
     def inventory_filepath
-      File.join(File.dirname(File.expand_path(__FILE__)), 'inventory.ini')
+      File.join(INVENTORY_DIR, 'inventory.ini')
     end
 
     def known_hosts_filepath
       "/home/#{ENV['USER']}/.ssh/known_hosts"
-    end
-
-    def versionify(family)
-      case family
-      when /5/
-        5
-      when /6/
-        6
-      when /7/
-        7
-      else
-        raise "you suck"
-      end
     end
 
     def shell(cmd, options = {})
@@ -233,5 +231,5 @@ module PuppetAgentBuild
         raise "Non-zero exit status from [ #{cmd} ]." unless $?.to_i.zero?
       end
     end
-  end # class SRPMFoundry
+  end # class Foundry
 end # module PuppetAgentBuild

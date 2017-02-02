@@ -9,9 +9,11 @@
     url: "http://downloads.sourceforge.net/project/swig/swig/swig-{{ swig_version }}/swig-{{ swig_version }}.tar.gz"
     dest: "{{ build_dir }}"
     validate_certs: no
-  register: result
-  until: result|succeeded
+    timeout: 30
+  register: download_swig_result
+  until: download_swig_result | succeeded
   retries: 5
+  delay: 10
 
 - name: untar swig
   command: "tar xvzf {{ build_dir }}/swig-{{ swig_version }}.tar.gz"

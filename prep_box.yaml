@@ -29,8 +29,8 @@
         - zip
         - pcre-devel
         - vim # for if/when i need to ssh in
-      register: result
-      until: result|succeeded
+      register: install_pkgs_result
+      until: install_pkgs_result | succeeded
       retries: 5
 
     - include: gcc.yaml

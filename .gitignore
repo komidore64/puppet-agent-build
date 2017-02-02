@@ -9,4 +9,5 @@ build/*
 rpms
 !rpms/file-list-for-rpm
 
-lib/inventory.ini
+inventory.ini
+ansible.log
