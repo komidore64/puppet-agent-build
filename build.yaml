@@ -6,7 +6,7 @@
         repo: https://github.com/puppetlabs/puppet-agent.git
         dest: "{{ playbook_dir }}/puppet-agent"
         update: no
-        version: 1.7.0
+        version: 1.8.2
 
     - name: clone vanagon
       git:
