@@ -88,6 +88,11 @@
         src: puppet-agent.configs.components.ruby-shadow.rb.patch
         dest: "{{ playbook_dir }}/puppet-agent/configs/components/ruby-shadow.rb"
 
+    - name: patch rubygem-locale
+      patch:
+        src: puppet-agent.configs.components.rubygem-locale.rb.patch
+        dest: "{{ playbook_dir }}/puppet-agent/configs/components/rubygem-locale.rb"
+
     - name: puppet-agent dir bundle update
       shell: "/bin/bash --login -c 'source ~/.rvm/scripts/rvm && rvm_is_not_a_function=0 rvm use 2.2.1@puppet-agent-build && VANAGON_LOCATION=file://{{ playbook_dir }}/puppet-agent/vanagon bundle update'"
       args:

@@ -3,6 +3,6 @@
 ---
 >     pkg.md5sum "544f75aab11c2af352facc51af12029f"
 38c38
-<      "swig -Wall -ruby -I/usr/include -o selinuxswig_ruby_wrap.c -outdir ./ selinuxswig_ruby.i",
+<      "swig -Wall -ruby #{system_include} -o selinuxswig_ruby_wrap.c -outdir ./ selinuxswig_ruby.i",
 ---
->      "/opt/pl-build-tools/bin/swig -Wall -ruby -I/usr/include -o selinuxswig_ruby_wrap.c -outdir ./ selinuxswig_ruby.i",
+>      "/opt/pl-build-tools/bin/swig -Wall -ruby #{system_include} -o selinuxswig_ruby_wrap.c -outdir ./ selinuxswig_ruby.i",

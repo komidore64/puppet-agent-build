@@ -1,9 +1,4 @@
 91a92,94
->         -DCURL_INCLUDE_DIR=../curl-7.46.0/include \
+>         -DCURL_INCLUDE_DIR=../curl-7.50.3/include \
 >         -DCMAKE_CXX_FLAGS='-fPIC -L /opt/pl-build-tools/lib' \
 >         -DCMAKE_C_FLAGS='-fPIC -L /opt/pl-build-tools/lib' \
-110,111c113
-<       "#{make} -j$(shell expr $(shell #{platform[:num_cores]}) + 1)",
-<       "#{test}"
----
->       "#{make} -j$(shell expr $(shell #{platform[:num_cores]}) + 1)"

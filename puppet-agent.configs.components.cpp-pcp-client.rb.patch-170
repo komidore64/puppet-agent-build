@@ -1,5 +1,5 @@
 66a67,72
->           -DCURL_INCLUDE_DIR=../curl-7.50.3/include \
+>           -DCURL_INCLUDE_DIR=../curl-7.46.0/include \
 >           -DBoost_INCLUDE_DIR=/opt/pl-build-tools/include \
 >           -DCMAKE_CXX_FLAGS='-fPIC -L /opt/pl-build-tools/lib' \
 >           -DCMAKE_C_FLAGS='-fPIC -L /opt/pl-build-tools/lib' \
