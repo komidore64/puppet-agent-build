@@ -1,7 +1,15 @@
 196a197,198
 >         -DCMAKE_CXX_FLAGS='-fPIC -L /opt/pl-build-tools/lib' \
 >         -DCMAKE_C_FLAGS='-fPIC -L /opt/pl-build-tools/lib' \
-234c235
+224c226
 <   unless platform.is_windows? || platform.is_cross_compiled_linux? || platform.architecture == 'sparc'
 ---
 >   unless platform.is_windows? || platform.is_cross_compiled_linux? || platform.architecture == 'sparc' || platform.architecture == 's390x'
+239,241c241,243
+<   pkg.check do
+<     tests
+<   end
+---
+>   # pkg.check do
+>   #   tests
+>   # end

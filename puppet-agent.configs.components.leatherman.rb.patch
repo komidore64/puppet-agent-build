@@ -2,3 +2,29 @@
 >         -DCURL_INCLUDE_DIR=../curl-7.50.3/include \
 >         -DCMAKE_CXX_FLAGS='-fPIC -L /opt/pl-build-tools/lib' \
 >         -DCMAKE_C_FLAGS='-fPIC -L /opt/pl-build-tools/lib' \
+101,106c104,109
+<   # Make test will explode horribly in a cross-compile situation
+<   # Tests will be skipped on AIX until they are expected to pass
+<   if !platform.is_cross_compiled? && !platform.is_aix?
+<     if platform.is_solaris? && platform.architecture != 'sparc'
+<       test_locale = "LANG=C LC_ALL=C"
+<     end
+---
+>   # # Make test will explode horribly in a cross-compile situation
+>   # # Tests will be skipped on AIX until they are expected to pass
+>   # if !platform.is_cross_compiled? && !platform.is_aix?
+>   #   if platform.is_solaris? && platform.architecture != 'sparc'
+>   #     test_locale = "LANG=C LC_ALL=C"
+>   #   end
+108,112c111,115
+<     pkg.check do
+<       ["LEATHERMAN_RUBY=#{settings[:libdir]}/$(shell #{ruby} -e 'print RbConfig::CONFIG[\"LIBRUBY_SO\"]') \
+<        LD_LIBRARY_PATH=#{settings[:libdir]} LIBPATH=#{settings[:libdir]} #{test_locale} #{make} test ARGS=-V"]
+<     end
+<   end
+---
+>   #   pkg.check do
+>   #     ["LEATHERMAN_RUBY=#{settings[:libdir]}/$(shell #{ruby} -e 'print RbConfig::CONFIG[\"LIBRUBY_SO\"]') \
+>   #      LD_LIBRARY_PATH=#{settings[:libdir]} LIBPATH=#{settings[:libdir]} #{test_locale} #{make} test ARGS=-V"]
+>   #   end
+>   # end
