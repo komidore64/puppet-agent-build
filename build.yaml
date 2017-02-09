@@ -53,6 +53,17 @@
         src: puppet-agent.configs.platforms.el-7-s390x.rb.patch
         dest: "{{ playbook_dir }}/puppet-agent/configs/platforms/el-7-s390x.rb"
 
+    # ppc64
+    - name: copy el-6-ppc64.rb
+      copy:
+        src: puppet-agent.configs.platforms.el-6-ppc64.rb
+        dest: "{{ playbook_dir }}/puppet-agent/configs/platforms/el-6-ppc64.rb"
+
+    - name: copy el-7-ppc64.rb
+      copy:
+        src: puppet-agent.configs.platforms.el-7-ppc64.rb
+        dest: "{{ playbook_dir }}/puppet-agent/configs/platforms/el-7-ppc64.rb"
+
     - name: patch ruby-selinux component
       patch:
         src: puppet-agent.configs.components.ruby-selinux.rb.patch
