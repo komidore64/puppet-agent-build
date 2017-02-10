@@ -40,14 +40,14 @@ ansible-playbook -i build_inventory build.yaml
 
 ## SRPM_Foundry
 
-work in progress
-
-to get request a beaker machine you'll need a valid kerberos ticket (from `kinit`) and the beaker cli already set up
+To request a Beaker machine you'll need a valid kerberos ticket (from `kinit`) and the beaker cli already set up.
 
 ```
 # in the puppet-agent-build dir
-$ bundle exec pry -r./lib/srpm_foundry.rb
-pry> foundry = PuppetAgentBuild::SRPMFoundry.new({"RedHatEnterpriseLinux7" => [:x86_64]})
+$ bundle exec pry -r./lib/puppet_agent_build.rb
+pry> foundry = PuppetAgentBuild::Foundry.new({'RedHatEnterpriseLinux7' => [:x86_64]})
 # => <new object>
 pry> foundry.prep_for_ansible
+# when finished run ansible commands in another shell
+pry> foundry.shutdown # releases the beaker machines
 ```
