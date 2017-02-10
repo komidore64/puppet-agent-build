@@ -26,12 +26,12 @@
   args:
     chdir: "{{ build_dir }}/swig-{{ swig_version }}"
 
-- name: run swig make
+- name: make swig
   command: make
   args:
     chdir: "{{ build_dir }}/swig-{{ swig_version }}"
 
-- name: run swig make install
+- name: make install swig
   command: make install
   args:
     chdir: "{{ build_dir }}/swig-{{ swig_version }}"

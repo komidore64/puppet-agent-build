@@ -36,17 +36,17 @@
   args:
     chdir: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}/build"
 
-- name: cheesy hax0rz
+- name: we don't care about c99 extension warnings
   replace:
     dest: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}/build/test/CMakeFiles/run-tests.dir/flags.make"
-    regexp: "-Wno-c99-extensions" # no "replace" field tells ansible to simply delete the match
+    regexp: "-Wno-c99-extensions"
 
 - name: make yaml-cpp
   shell: make
   args:
     chdir: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}/build"
 
-- name: install yaml-cpp
+- name: make install yaml-cpp
   shell: make install
   args:
     chdir: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}/build"

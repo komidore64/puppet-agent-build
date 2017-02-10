@@ -37,20 +37,20 @@
 
 - name: patch gcc/gmp/configure.in
   patch:
-    src: opt.build.gcc.gmp.configure.in.patch
+    src: patches/1.8.2/opt/build/gcc/gmp/configure.in.patch
     dest: "{{ build_dir }}/gcc-{{ gcc_version }}/gmp/configure.in"
 
 - name: patch gcc/gmp/configure
   patch:
-    src: opt.build.gcc.gmp.configure.patch
+    src: patches/1.8.2/opt/build/gcc/gmp/configure.patch
     dest: "{{ build_dir }}/gcc-{{ gcc_version }}/gmp/configure"
 
-- name: run gcc make
+- name: make gcc
   command: make
   args:
     chdir: "{{ build_dir }}/gcc-{{ gcc_version }}"
 
-- name: run gcc make install
+- name: make install gcc
   command: make install
   args:
     chdir: "{{ build_dir }}/gcc-{{ gcc_version }}"

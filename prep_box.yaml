@@ -28,7 +28,7 @@
         - bzip2
         - zip
         - pcre-devel
-        - vim # for if/when i need to ssh in
+        - vim # for if/when ssh'ing in
       register: install_pkgs_result
       until: install_pkgs_result | succeeded
       retries: 5
@@ -41,5 +41,5 @@
 
     - name: deploy toolchain file
       copy:
-        src: pl-build-toolchain.cmake
-        dest: /opt/pl-build-tools
+        src: "newfiles/{{ puppetlabs_build_dir }}/pl-build-toolchain.cmake"
+        dest: "{{ puppetlabs_build_dir }}"

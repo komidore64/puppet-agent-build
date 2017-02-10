@@ -24,12 +24,12 @@
   args:
     chdir: "{{ build_dir }}/cmake-{{ cmake_version }}"
 
-- name: run cmake make
+- name: make cmake
   command: make
   args:
     chdir: "{{ build_dir }}/cmake-{{ cmake_version }}"
 
-- name: run cmake make install
+- name: make install cmake
   command: make install
   args:
     chdir: "{{ build_dir }}/cmake-{{ cmake_version }}"
