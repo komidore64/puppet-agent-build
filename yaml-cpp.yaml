@@ -36,7 +36,7 @@
   args:
     chdir: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}/build"
 
-- name: we don't care about c99 extension warnings
+- name: ignore c99 extension warnings for yaml-cpp
   replace:
     dest: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}/build/test/CMakeFiles/run-tests.dir/flags.make"
     regexp: "-Wno-c99-extensions"

@@ -9,6 +9,7 @@
     gcc_version: 4.8.5
     yaml_cpp_version: 0.5.3
     swig_version: 3.0.10
+    puppet_agent_version: 1.8.2
   tasks:
     - name: disable selinux
       command: setenforce 0
