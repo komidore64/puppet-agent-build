@@ -34,11 +34,11 @@
       until: install_pkgs_result | succeeded
       retries: 5
 
-    - include: gcc.yaml
-    - include: cmake.yaml
-    - include: boost.yaml
-    - include: yaml-cpp.yaml
-    - include: swig.yaml
+    - include: subplays/gcc.yaml
+    - include: subplays/cmake.yaml
+    - include: subplays/boost.yaml
+    - include: subplays/yaml-cpp.yaml
+    - include: subplays/swig.yaml
 
     - name: deploy toolchain file
       copy:
