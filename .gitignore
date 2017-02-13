@@ -1,4 +1,4 @@
-puppet-agent*
+puppet-agent/*
 build/*
 *.retry
 *.swp
@@ -6,6 +6,8 @@ build/*
 *.swo
 *.pyc
 
-.ruby-version
-.ruby-gemset
-Gemfile.lock
+rpms
+!rpms/file-list-for-rpm
+
+inventory.ini
+ansible.log

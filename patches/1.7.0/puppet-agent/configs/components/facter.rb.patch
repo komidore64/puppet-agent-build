@@ -1,0 +1,12 @@
+196a197,198
+>         -DCMAKE_CXX_FLAGS='-fPIC -L /opt/pl-build-tools/lib' \
+>         -DCMAKE_C_FLAGS='-fPIC -L /opt/pl-build-tools/lib' \
+219,220c221
+<       "#{make} -j$(shell expr $(shell #{platform[:num_cores]}) + 1)",
+<       test
+---
+>       "#{make} -j$(shell expr $(shell #{platform[:num_cores]}) + 1)"
+234c235
+<   unless platform.is_windows? || platform.is_cross_compiled_linux? || platform.architecture == 'sparc'
+---
+>   unless platform.is_windows? || platform.is_cross_compiled_linux? || platform.architecture == 'sparc' || platform.architecture == 's390x'

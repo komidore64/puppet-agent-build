@@ -1,42 +1,52 @@
 ---
-- name: 'Make build directory'
+- name: make build directory
   file:
     path: "{{ build_dir }}"
     state: directory
 
-- name: 'Download yaml-cpp'
+- name: download yaml-cpp
   get_url:
     url: "https://github.com/jbeder/yaml-cpp/archive/release-{{ yaml_cpp_version }}.tar.gz"
     dest: "{{ build_dir }}/yaml-cpp-{{ yaml_cpp_version }}.tar.gz"
     validate_certs: no
+    timeout: 30
+  register: download_yaml_cpp_result
+  until: download_yaml_cpp_result | succeeded
+  retries: 5
+  delay: 10
 
-- name: 'Untar yaml-cpp'
+- name: untar yaml-cpp
   command: "tar -zxvf {{ build_dir }}/yaml-cpp-{{ yaml_cpp_version }}.tar.gz"
   args:
     chdir: "{{ build_dir }}"
     creates: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}"
 
-- name: 'Remove yaml-cpp build directory'
+- name: remove yaml-cpp build directory
   file:
     state: absent
     path: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}/build"
 
-- name: 'Make yaml-cpp build directory'
+- name: make yaml-cpp build directory
   file:
     state: directory
     path: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}/build"
 
-- name: 'Cmake yaml-cpp'
-  shell: "{{ puppetlabs_build_dir }}/bin/cmake -DCMAKE_INSTALL_PREFIX={{ puppetlabs_build_dir }} -DCMAKE_C_FLAGS='-fPIC' -DCMAKE_CXX_FLAGS='-fPIC' .."
+- name: cmake yaml-cpp
+  shell: "{{ puppetlabs_build_dir }}/bin/cmake -DCMAKE_INSTALL_PREFIX={{ puppetlabs_build_dir }} -DCMAKE_C_FLAGS='-fPIC' -DCMAKE_CXX_FLAGS='-fPIC' -DBoost_INCLUDE_DIR={{ puppetlabs_build_dir }}/include .."
   args:
     chdir: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}/build"
 
-- name: 'Make yaml-cpp'
-  shell: "make"
+- name: ignore c99 extension warnings for yaml-cpp
+  replace:
+    dest: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}/build/test/CMakeFiles/run-tests.dir/flags.make"
+    regexp: "-Wno-c99-extensions"
+
+- name: make yaml-cpp
+  shell: make
   args:
     chdir: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}/build"
 
-- name: 'Install yaml-cpp'
-  shell: "make install"
+- name: make install yaml-cpp
+  shell: make install
   args:
     chdir: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}/build"

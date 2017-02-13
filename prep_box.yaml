@@ -8,31 +8,39 @@
     boost_version: 1.58.0
     gcc_version: 4.8.5
     yaml_cpp_version: 0.5.3
+    swig_version: 3.0.10
+    puppet_agent_version: 1.8.2
   tasks:
-    - name: 'Install epel'
-      yum:
-        name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm
-        state: present
-
-    - name: 'Disable selinux'
+    - name: disable selinux
       command: setenforce 0
 
-    - name: 'Install build packages'
+    - name: install packages
       yum:
         name: "{{ item }}"
       with_items:
+        - make
+        - imake
         - gcc
         - gcc-c++
         - python-devel
         - bzip2-devel
         - libselinux-python
+        - wget
+        - bzip2
+        - zip
+        - pcre-devel
+        - vim # for if/when ssh'ing in
+      register: install_pkgs_result
+      until: install_pkgs_result | succeeded
+      retries: 5
 
-    - include: gcc.yaml
-    - include: cmake.yaml
-    - include: boost.yaml
-    - include: yaml-cpp.yaml
+    - include: subplays/gcc.yaml
+    - include: subplays/cmake.yaml
+    - include: subplays/boost.yaml
+    - include: subplays/yaml-cpp.yaml
+    - include: subplays/swig.yaml
 
-    - name: 'Deploy toolchain file'
+    - name: deploy toolchain file
       copy:
-        src: pl-build-toolchain.cmake
-        dest: /opt/pl-build-tools
+        src: "newfiles/{{ puppetlabs_build_dir }}/pl-build-toolchain.cmake"
+        dest: "{{ puppetlabs_build_dir }}"
