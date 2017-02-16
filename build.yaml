@@ -136,19 +136,22 @@
 
 - hosts: build_host
   become: true
+  vars:
+    timestamp: "{{ ansible_date_time.date }}-{{ ansible_date_time.hour }}:{{ ansible_date_time.minute }}:{{ ansible_date_time.second }}"
   tasks:
     - name: find srpm
-      shell: find /var/tmp | grep "src.rpm$"
+      shell: "find /var/tmp/tmp.* -name *src.rpm"
       register: srpm_path
 
     - name: create arch destination directory
       file:
-        dest: "{{ playbook_dir }}/rpms/{{ el_arch }}"
+        dest: "{{ playbook_dir }}/SRPMs/{{ timestamp }}/{{ el_arch }}"
         state: directory
+        recurse: true
 
     - name: get srpm from host
       fetch:
         src: "{{ item }}"
-        dest: "{{ playbook_dir }}/rpms/{{ el_arch }}/"
+        dest: "{{ playbook_dir }}/SRPMs/{{ timestamp }}/{{ el_arch }}/"
         flat: yes
       with_items: "{{ srpm_path.stdout.split('\n') }}"

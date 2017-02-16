@@ -6,8 +6,6 @@ build/*
 *.swo
 *.pyc
 
-rpms
-!rpms/file-list-for-rpm
-
+SRPMs
 inventory.ini
 ansible.log
