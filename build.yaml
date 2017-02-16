@@ -1,5 +1,7 @@
 ---
 - hosts: localhost
+  vars:
+    puppet_agent_version: 1.8.2
   tasks:
     - name: clone puppet agent
       git:
