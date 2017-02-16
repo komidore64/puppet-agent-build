@@ -1,4 +1,12 @@
 ---
+- hosts: build_host
+  become: true
+  tasks:
+    - name: remove any previous vanagon workspaces
+      file:
+        state: absent
+        path: "/var/tmp/tmp.*"
+
 - hosts: localhost
   vars:
     puppet_agent_version: 1.8.2
