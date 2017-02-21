@@ -7,54 +7,77 @@
 - name: download gcc
   get_url:
     url: "http://www.netgull.com/gcc/releases/gcc-{{ gcc_version }}/gcc-{{ gcc_version }}.tar.gz"
-    dest: "{{ build_dir }}"
-    validate_certs: no
+    dest: "{{ build_dir }}/gcc-{{ gcc_version }}.tar.gz"
+    validate_certs: false
     timeout: 30
-  register: download_gcc_result
-  until: download_gcc_result | succeeded
+    thirsty: false
+  register: gcc_download_result
+  until: gcc_download_result | succeeded
   retries: 5
   delay: 10
 
-- name: untar gcc
-  command: "tar -zxvf {{ build_dir }}/gcc-{{ gcc_version }}.tar.gz"
-  args:
-    chdir: "{{ build_dir }}"
-    creates: "{{ build_dir }}/gcc-{{ gcc_version }}"
+- name: check if gcc previously built successfully
+  stat:
+    path: "{{ build_dir }}/gcc-completed"
+  register: gcc_completed
 
-- name: download gcc prerequisites
-  command: ./contrib/download_prerequisites
-  args:
-    chdir: "{{ build_dir }}/gcc-{{ gcc_version }}"
-  register: download_gcc_prereqs_result
-  until: download_gcc_prereqs_result | succeeded
-  retries: 5
-  delay: 10
+- block:
+  - name: remove any previously unsuccessful gcc build attempts
+    file:
+      path: "{{ build_dir }}/gcc-{{ gcc_version }}"
+      state: absent
 
-- name: configure gcc
-  shell: "./configure --prefix={{ puppetlabs_build_dir }} --disable-multilib"
-  args:
-    chdir: "{{ build_dir }}/gcc-{{ gcc_version }}"
+  - name: unarchive gcc
+    unarchive:
+      src: "{{ build_dir }}/gcc-{{ gcc_version }}.tar.gz"
+      dest: "{{ build_dir }}"
+      creates: "{{ build_dir }}/gcc-{{ gcc_version }}"
+      remote_src: true
 
-- name: patch gcc/gmp/configure.in
-  patch:
-    src: "patches/{{ puppet_agent_version }}/opt/build/gcc/gmp/configure.in.patch"
-    dest: "{{ build_dir }}/gcc-{{ gcc_version }}/gmp/configure.in"
+  - name: download gcc prerequisites
+    command: ./contrib/download_prerequisites
+    args:
+      chdir: "{{ build_dir }}/gcc-{{ gcc_version }}"
+    register: gcc_download_prereqs_result
+    until: gcc_download_prereqs_result | succeeded
+    retries: 5
+    delay: 10
 
-- name: patch gcc/gmp/configure
-  patch:
-    src: "patches/{{ puppet_agent_version }}/opt/build/gcc/gmp/configure.patch"
-    dest: "{{ build_dir }}/gcc-{{ gcc_version }}/gmp/configure"
+  - name: configure gcc
+    command: "./configure --prefix={{ puppetlabs_build_dir }} --disable-multilib"
+    args:
+      chdir: "{{ build_dir }}/gcc-{{ gcc_version }}"
 
-- name: make gcc
-  command: make
-  args:
-    chdir: "{{ build_dir }}/gcc-{{ gcc_version }}"
+  - name: patch gcc/gmp/configure.in
+    patch:
+      src: "patches/{{ puppet_agent_version }}/opt/build/gcc/gmp/configure.in.patch"
+      dest: "{{ build_dir }}/gcc-{{ gcc_version }}/gmp/configure.in"
 
-- name: make install gcc
-  command: make install
-  args:
-    chdir: "{{ build_dir }}/gcc-{{ gcc_version }}"
+  - name: patch gcc/gmp/configure
+    patch:
+      src: "patches/{{ puppet_agent_version }}/opt/build/gcc/gmp/configure.patch"
+      dest: "{{ build_dir }}/gcc-{{ gcc_version }}/gmp/configure"
 
-- name: copy libstdc++ to /usr/lib64
-  shell: "cp {{ puppetlabs_build_dir }}/lib64/libstdc++.so.6 /usr/lib64 -f"
-  when: ansible_architecture == 'x86_64'
+  - name: make gcc
+    command: make
+    args:
+      chdir: "{{ build_dir }}/gcc-{{ gcc_version }}"
+
+  - name: make install gcc
+    command: make install
+    args:
+      chdir: "{{ build_dir }}/gcc-{{ gcc_version }}"
+
+  - name: copy libstdc++ to /usr/lib64
+    copy:
+      src: "{{ puppetlabs_build_dir }}/lib64/libstdc++.so.6"
+      dest: /usr/lib64/libstdc++.so.6
+      remote_src: true
+    when: ansible_architecture == 'x86_64'
+
+  - name: gcc build/install completed
+    file:
+      path: "{{ build_dir }}/gcc-completed"
+      state: touch
+
+  when: gcc_completed.stat.islnk is not defined
