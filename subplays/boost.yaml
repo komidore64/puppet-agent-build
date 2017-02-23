@@ -1,4 +1,6 @@
 ---
+- set_fact: boost_v={{ boost_version.replace('.', '_') }}
+
 - name: make build directory
   file:
     path: "{{ build_dir }}"
@@ -6,49 +8,69 @@
 
 - name: download boost
   get_url:
-    url: "http://downloads.sourceforge.net/project/boost/boost/{{ boost_version }}/boost_{{ boost_version.replace('.', '_') }}.tar.gz"
-    dest: "{{ build_dir }}/boost_{{ boost_version }}.tar.gz"
-    validate_certs: no
+    url: "http://downloads.sourceforge.net/project/boost/boost/{{ boost_version }}/boost_{{ boost_v }}.tar.gz"
+    dest: "{{ build_dir }}/boost_{{ boost_v }}.tar.gz"
+    validate_certs: false
     timeout: 30
-  register: download_boost_result
-  until: download_boost_result | succeeded
+    thirsty: false
+  register: boost_download_result
+  until: boost_download_result | succeeded
   retries: 5
   delay: 10
 
-- name: untar boost
-  command: "tar -zxvf {{ build_dir }}/boost_{{ boost_version }}.tar.gz"
-  args:
-    chdir: "{{ build_dir }}"
-    creates: "{{ build_dir }}/boost_{{ boost_version.replace('.', '_') }}"
+- name: check if boost previously built successfully
+  stat:
+    path: "{{ build_dir }}/boost-completed"
+  register: boost_completed
 
-- name: bootstrap boost
-  command: "./bootstrap.sh --prefix={{ puppetlabs_build_dir }}"
-  args:
-    chdir: "{{ build_dir }}/boost_{{ boost_version.replace('.', '_') }}"
+- block:
+  - name: remove any previously unsuccessful boost build attempts
+    file:
+      path: "{{ build_dir }}/boost_{{ boost_v }}"
+      state: absent
 
-- name: tell boost to use our locally-built gcc
-  replace:
-    dest: "{{ build_dir }}/boost_{{ boost_version.replace('.', '_') }}/project-config.jam"
-    regexp: "using gcc ; "
-    replace: "using gcc : : /opt/pl-build-tools/bin/g++ ; "
-  when: ansible_architecture != 's390x'
+  - name: unarchive boost
+    unarchive:
+      src: "{{ build_dir }}/boost_{{ boost_v }}.tar.gz"
+      dest: "{{ build_dir }}"
+      creates: "{{ build_dir }}/boost_{{ boost_v }}"
+      remote_src: true
 
-- name: tell boost to use our locally-built cross-compiled gcc for s390x
-  replace:
-    dest: "{{ build_dir}}/boost_{{ boost_version.replace('.', '_') }}/project-config.jam"
-    regexp: "using gcc ; "
-    replace: "using gcc : : /opt/pl-build-tools/bin/s390x-ibm-linux-gnu-g++ ; "
-  when: ansible_architecture == 's390x'
+  - name: bootstrap boost
+    command: "./bootstrap.sh --prefix={{ puppetlabs_build_dir }}"
+    args:
+      chdir: "{{ build_dir }}/boost_{{ boost_v }}"
 
-- name: install boost
-  shell: "./b2 cxxflags=-fPIC cflags=-fPIC -a install"
-  args:
-    chdir: "{{ build_dir }}/boost_{{ boost_version.replace('.', '_') }}"
-  when: ansible_architecture != 's390x'
+  - name: tell boost to use our locally-built gcc
+    replace:
+      dest: "{{ build_dir }}/boost_{{ boost_v }}/project-config.jam"
+      regexp: "using gcc ; "
+      replace: "using gcc : : /opt/pl-build-tools/bin/g++ ; "
+    when: ansible_architecture != 's390x'
 
-- name: install boost for s390x
-  shell: "./b2 cxxflags=-fPIC cflags=-fPIC -a install"
-  args:
-    chdir: "{{ build_dir }}/boost_{{ boost_version.replace('.', '_') }}"
-  when: ansible_architecture == 's390x'
-  ignore_errors: true # this was literally the solution recommended to me in #boost on freenode :(
+  - name: tell boost to use our locally-built cross-compiled gcc for s390x
+    replace:
+      dest: "{{ build_dir }}/boost_{{ boost_v }}/project-config.jam"
+      regexp: "using gcc ; "
+      replace: "using gcc : : /opt/pl-build-tools/bin/s390x-ibm-linux-gnu-g++ ; "
+    when: ansible_architecture == 's390x'
+
+  - name: install boost
+    command: "./b2 cxxflags=-fPIC cflags=-fPIC -a install"
+    args:
+      chdir: "{{ build_dir }}/boost_{{ boost_v }}"
+    when: ansible_architecture != 's390x'
+
+  - name: install boost for s390x
+    command: "./b2 cxxflags=-fPIC cflags=-fPIC -a install"
+    args:
+      chdir: "{{ build_dir }}/boost_{{ boost_v }}"
+    when: ansible_architecture == 's390x'
+    ignore_errors: true # this was literally the solution recommended to me in #boost on freenode :(
+
+  - name: boost build/install completed
+    file:
+      path: "{{ build_dir }}/boost-completed"
+      state: touch
+
+  when: boost_completed.stat.islnk is not defined
