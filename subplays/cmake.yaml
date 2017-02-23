@@ -7,29 +7,51 @@
 - name: download cmake
   get_url:
     url: "https://cmake.org/files/v3.2/cmake-{{ cmake_version }}.tar.gz"
-    dest: "{{ build_dir }}"
-    validate_certs: no
-  register: download_cmake_result
-  until: download_cmake_result | succeeded
+    dest: "{{ build_dir }}/cmake-{{ cmake_version }}.tar.gz"
+    validate_certs: false
+    timeout: 30
+    thirsty: false
+  register: cmake_download_result
+  until: cmake_download_result | succeeded
   retries: 5
+  delay: 10
 
-- name: untar cmake
-  command: "tar -zxvf {{ build_dir }}/cmake-{{ cmake_version }}.tar.gz"
-  args:
-    chdir: "{{ build_dir }}"
-    creates: "{{ build_dir }}/cmake-{{ cmake_version }}"
+- name: check if cmake previously built successfully
+  stat:
+    path: "{{ build_dir }}/cmake-completed"
+  register: cmake_completed
 
-- name: bootstrap cmake
-  shell: "./bootstrap --prefix={{ puppetlabs_build_dir }}"
-  args:
-    chdir: "{{ build_dir }}/cmake-{{ cmake_version }}"
+- block:
+  - name: remove any previously unsuccessful cmake build attempts
+    file:
+      path: "{{ build_dir }}/cmake-{{ cmake_version }}"
+      state: absent
 
-- name: make cmake
-  command: make
-  args:
-    chdir: "{{ build_dir }}/cmake-{{ cmake_version }}"
+  - name: unarchive cmake
+    unarchive:
+      src: "{{ build_dir }}/cmake-{{ cmake_version }}.tar.gz"
+      dest: "{{ build_dir }}"
+      creates: "{{ build_dir }}/cmake-{{ cmake_version }}"
+      remote_src: true
 
-- name: make install cmake
-  command: make install
-  args:
-    chdir: "{{ build_dir }}/cmake-{{ cmake_version }}"
+  - name: bootstrap cmake
+    command: "./bootstrap --prefix={{ puppetlabs_build_dir }}"
+    args:
+      chdir: "{{ build_dir }}/cmake-{{ cmake_version }}"
+
+  - name: make cmake
+    command: make
+    args:
+      chdir: "{{ build_dir }}/cmake-{{ cmake_version }}"
+
+  - name: make install cmake
+    command: make install
+    args:
+      chdir: "{{ build_dir }}/cmake-{{ cmake_version }}"
+
+  - name: cmake build/install successfully
+    file:
+      path: "{{ build_dir}}/cmake-completed"
+      state: touch
+
+  when: cmake_completed.stat.islnk is not defined # block

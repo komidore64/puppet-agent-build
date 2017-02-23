@@ -80,4 +80,4 @@
       path: "{{ build_dir }}/gcc-completed"
       state: touch
 
-  when: gcc_completed.stat.islnk is not defined
+  when: gcc_completed.stat.islnk is not defined # block
