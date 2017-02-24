@@ -1,5 +1,5 @@
 ---
-- name: make build directory
+- name: make build dir
   file:
     path: "{{ build_dir }}"
     state: directory
@@ -8,45 +8,65 @@
   get_url:
     url: "https://github.com/jbeder/yaml-cpp/archive/release-{{ yaml_cpp_version }}.tar.gz"
     dest: "{{ build_dir }}/yaml-cpp-{{ yaml_cpp_version }}.tar.gz"
-    validate_certs: no
+    validate_certs: false
     timeout: 30
-  register: download_yaml_cpp_result
-  until: download_yaml_cpp_result | succeeded
+    thirsty: false
+  register: yaml_cpp_download_result
+  until: yaml_cpp_download_result | succeeded
   retries: 5
   delay: 10
 
-- name: untar yaml-cpp
-  command: "tar -zxvf {{ build_dir }}/yaml-cpp-{{ yaml_cpp_version }}.tar.gz"
-  args:
-    chdir: "{{ build_dir }}"
-    creates: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}"
+- name: check if yaml-cpp previously built successfully
+  stat:
+    path: "{{ build_dir }}/yaml-cpp-completed"
+  register: yaml_cpp_completed
 
-- name: remove yaml-cpp build directory
-  file:
-    state: absent
-    path: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}/build"
+- block:
+  - name: remove any previously unsuccessful yaml-cpp build attempts
+    file:
+      path: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}"
+      state: absent
 
-- name: make yaml-cpp build directory
-  file:
-    state: directory
-    path: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}/build"
+  - name: unarchive yaml-cpp
+    unarchive:
+      src: "{{ build_dir }}/yaml-cpp-{{ yaml_cpp_version }}.tar.gz"
+      dest: "{{ build_dir }}"
+      creates: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}"
+      remote_src: true
 
-- name: cmake yaml-cpp
-  shell: "{{ puppetlabs_build_dir }}/bin/cmake -DCMAKE_INSTALL_PREFIX={{ puppetlabs_build_dir }} -DCMAKE_C_FLAGS='-fPIC' -DCMAKE_CXX_FLAGS='-fPIC' -DBoost_INCLUDE_DIR={{ puppetlabs_build_dir }}/include .."
-  args:
-    chdir: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}/build"
+  - name: remove yaml-cpp build dir
+    file:
+      path: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}/build"
+      state: absent
 
-- name: ignore c99 extension warnings for yaml-cpp
-  replace:
-    dest: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}/build/test/CMakeFiles/run-tests.dir/flags.make"
-    regexp: "-Wno-c99-extensions"
+  - name: make yaml-cpp build dir
+    file:
+      path: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}/build"
+      state: directory
 
-- name: make yaml-cpp
-  shell: make
-  args:
-    chdir: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}/build"
+  - name: cmake yaml-cpp
+    command: "{{ puppetlabs_build_dir }}/bin/cmake -DCMAKE_INSTALL_PREFIX={{ puppetlabs_build_dir }} -DCMAKE_C_FLAGS='-fPIC' -DCMAKE_CXX_FLAGS='-fPIC' -DBoost_INCLUDE_DIR={{ puppetlabs_build_dir }}/include .."
+    args:
+      chdir: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}/build"
 
-- name: make install yaml-cpp
-  shell: make install
-  args:
-    chdir: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}/build"
+  - name: ignore c99 extension warnings for yaml-cpp
+    replace:
+      dest: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}/build/test/CMakeFiles/run-tests.dir/flags.make"
+      regexp: "-Wno-c99-extensions"
+
+  - name: make yaml-cpp
+    command: make
+    args:
+      chdir: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}/build"
+
+  - name: make install yaml-cpp
+    command: make install
+    args:
+      chdir: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}/build"
+
+  - name: yaml-cpp build/install completed
+    file:
+      path: "{{ build_dir }}/yaml-cpp-completed"
+      state: touch
+
+  when: yaml_cpp_completed.stat.islnk is not defined # block

@@ -1,7 +1,7 @@
 ---
 - set_fact: boost_v={{ boost_version.replace('.', '_') }}
 
-- name: make build directory
+- name: make build dir
   file:
     path: "{{ build_dir }}"
     state: directory
@@ -73,4 +73,4 @@
       path: "{{ build_dir }}/boost-completed"
       state: touch
 
-  when: boost_completed.stat.islnk is not defined
+  when: boost_completed.stat.islnk is not defined # block

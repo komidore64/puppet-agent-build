@@ -1,5 +1,5 @@
 ---
-- name: make build directory
+- name: make build dir
   file:
     path: "{{ build_dir }}"
     state: directory
