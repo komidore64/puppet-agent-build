@@ -1,28 +1,22 @@
 ---
-- name: make build dir
-  file:
-    path: "{{ build_dir }}"
-    state: directory
-
-- name: download gcc
-  get_url:
-    url: "http://www.netgull.com/gcc/releases/gcc-{{ gcc_version }}/gcc-{{ gcc_version }}.tar.gz"
-    dest: "{{ build_dir }}/gcc-{{ gcc_version }}.tar.gz"
-    validate_certs: false
-    timeout: 30
-    thirsty: false
-  register: gcc_download_result
-  until: gcc_download_result | succeeded
-  retries: 5
-  delay: 10
-
-- name: check if gcc previously built successfully
+- name: check if gcc built
   stat:
     path: "{{ build_dir }}/gcc-completed"
   register: gcc_completed
 
 - block:
-  - name: remove any previously unsuccessful gcc build attempts
+  - name: download gcc
+    get_url:
+      url: "http://www.netgull.com/gcc/releases/gcc-{{ gcc_version }}/gcc-{{ gcc_version }}.tar.gz"
+      dest: "{{ build_dir }}/gcc-{{ gcc_version }}.tar.gz"
+      validate_certs: false
+      timeout: 30
+    register: gcc_download_result
+    until: gcc_download_result | succeeded
+    retries: 5
+    delay: 10
+
+  - name: remove any previous gcc build attempts
     file:
       path: "{{ build_dir }}/gcc-{{ gcc_version }}"
       state: absent
@@ -34,7 +28,7 @@
       creates: "{{ build_dir }}/gcc-{{ gcc_version }}"
       remote_src: true
 
-  - name: download gcc prerequisites
+  - name: download gcc prereqs
     command: ./contrib/download_prerequisites
     args:
       chdir: "{{ build_dir }}/gcc-{{ gcc_version }}"
@@ -58,12 +52,12 @@
       src: "patches/{{ puppet_agent_version }}/opt/build/gcc/gmp/configure.patch"
       dest: "{{ build_dir }}/gcc-{{ gcc_version }}/gmp/configure"
 
-  - name: make gcc
+  - name: build gcc
     command: make
     args:
       chdir: "{{ build_dir }}/gcc-{{ gcc_version }}"
 
-  - name: make install gcc
+  - name: install gcc
     command: make install
     args:
       chdir: "{{ build_dir }}/gcc-{{ gcc_version }}"

@@ -1,28 +1,22 @@
 ---
-- name: make build dir
-  file:
-    path: "{{ build_dir }}"
-    state: directory
-
-- name: download yaml-cpp
-  get_url:
-    url: "https://github.com/jbeder/yaml-cpp/archive/release-{{ yaml_cpp_version }}.tar.gz"
-    dest: "{{ build_dir }}/yaml-cpp-{{ yaml_cpp_version }}.tar.gz"
-    validate_certs: false
-    timeout: 30
-    thirsty: false
-  register: yaml_cpp_download_result
-  until: yaml_cpp_download_result | succeeded
-  retries: 5
-  delay: 10
-
-- name: check if yaml-cpp previously built successfully
+- name: check if yaml-cpp built
   stat:
     path: "{{ build_dir }}/yaml-cpp-completed"
   register: yaml_cpp_completed
 
 - block:
-  - name: remove any previously unsuccessful yaml-cpp build attempts
+  - name: download yaml-cpp
+    get_url:
+      url: "https://github.com/jbeder/yaml-cpp/archive/release-{{ yaml_cpp_version }}.tar.gz"
+      dest: "{{ build_dir }}/yaml-cpp-{{ yaml_cpp_version }}.tar.gz"
+      validate_certs: false
+      timeout: 30
+    register: yaml_cpp_download_result
+    until: yaml_cpp_download_result | succeeded
+    retries: 5
+    delay: 10
+
+  - name: remove any previous yaml-cpp build attempts
     file:
       path: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}"
       state: absent
@@ -34,7 +28,7 @@
       creates: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}"
       remote_src: true
 
-  - name: remove yaml-cpp build dir
+  - name: remove yaml-cpp build dir # because reasons
     file:
       path: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}/build"
       state: absent
@@ -44,7 +38,7 @@
       path: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}/build"
       state: directory
 
-  - name: cmake yaml-cpp
+  - name: configure yaml-cpp
     command: "{{ puppetlabs_build_dir }}/bin/cmake -DCMAKE_INSTALL_PREFIX={{ puppetlabs_build_dir }} -DCMAKE_C_FLAGS='-fPIC' -DCMAKE_CXX_FLAGS='-fPIC' -DBoost_INCLUDE_DIR={{ puppetlabs_build_dir }}/include .."
     args:
       chdir: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}/build"
@@ -54,12 +48,12 @@
       dest: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}/build/test/CMakeFiles/run-tests.dir/flags.make"
       regexp: "-Wno-c99-extensions"
 
-  - name: make yaml-cpp
+  - name: build yaml-cpp
     command: make
     args:
       chdir: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}/build"
 
-  - name: make install yaml-cpp
+  - name: install yaml-cpp
     command: make install
     args:
       chdir: "{{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }}/build"

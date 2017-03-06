@@ -1,0 +1,67 @@
+---
+- name: disable selinux
+  command: setenforce 0
+
+- name: remove any previous vanagon workspaces
+  file:
+    state: absent
+    path: "/var/tmp/tmp.*"
+
+- name: check if box is already prepped
+  stat:
+    path: "/puppet-agent-build-prep-completed"
+  register: prep_completed
+
+- block:
+  - name: install packages
+    yum:
+      name: "{{ item }}"
+    with_items:
+      - make
+      - imake
+      - gcc
+      - gcc-c++
+      - python-devel
+      - bzip2-devel
+      - libselinux-python
+      - wget
+      - bzip2
+      - zip
+      - pcre-devel
+    register: install_pkgs_result
+    until: install_pkgs_result | succeeded
+    retries: 5
+
+  # TODO: uncomment with proper url once we have it
+  # - name: get prebuilt binaries archive from dogfood
+  # - get_url:
+  # -   url: "http://fqdn.com/files/puppet-agent-build/el{{ el_version }}-{{ el_arch }}.tar.gz"
+  # -   dest: "/el{{ el_version }}-{{ el_arch }}.tar.gz"
+  # -   validate_certs: false
+  # -   timeout: 30
+  # - register: dogfood_build_binaries
+  # - ignore_errors: true
+
+  - name: get prebuilt binaries archive from local puppet-agent-build repo
+    synchronize:
+      src: "{{ playbook_dir }}/build-binaries/el{{ el_version }}-{{ el_arch }}.tar.gz"
+      dest: "/el{{ el_version }}-{{ el_arch }}.tar.gz"
+    register: repo_build_binaries
+    ignore_errors: true
+
+  - name: unarchive prebuilt binaries
+    unarchive:
+      src: "/el{{ el_version }}-{{ el_arch }}.tar.gz"
+      dest: /
+      remote_src: true
+    when: (dogfood_build_binaries | succeeded) or (repo_build_binaries | succeeded)
+
+  - include: subplays/prep_box.yaml
+    when: (dogfood_build_binaries | failed) and (repo_build_binaries | failed)
+
+  - name: box preparation completed
+    file:
+      path: "/puppet-agent-build-prep-completed"
+      state: touch
+
+  when: prep_completed.stat.islnk is not defined # block

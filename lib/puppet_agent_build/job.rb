@@ -24,5 +24,9 @@ module PuppetAgentBuild
       end
     end
 
+    def to_s
+      "#{family}:#{arch}"
+    end
+
   end
 end

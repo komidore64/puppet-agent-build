@@ -1,0 +1,12 @@
+---
+- name: puppet-agent dir bundle update
+  shell: "/bin/bash --login -c 'source ~/.rvm/scripts/rvm && rvm_is_not_a_function=0 rvm use 2.2.1@puppet-agent-build && VANAGON_LOCATION=file://{{ playbook_dir }}/puppet-agent/vanagon bundle update'"
+  args:
+    chdir: "{{ playbook_dir }}/puppet-agent"
+    creates: Gemfile.lock
+
+- name: vanagon dir bundle update
+  shell: "/bin/bash --login -c 'source ~/.rvm/scripts/rvm && rvm_is_not_a_function=0 rvm use 2.2.1@puppet-agent-build && VANAGON_LOCATION=file://{{ playbook_dir }}/puppet-agent/vanagon bundle update'"
+  args:
+    chdir: "{{ playbook_dir }}/puppet-agent/vanagon"
+    creates: Gemfile.lock

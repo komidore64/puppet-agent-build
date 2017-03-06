@@ -1,28 +1,22 @@
 ---
-- name: make build dir
-  file:
-    path: "{{ build_dir }}"
-    state: directory
-
-- name: download swig
-  get_url:
-    url: "http://downloads.sourceforge.net/project/swig/swig/swig-{{ swig_version }}/swig-{{ swig_version }}.tar.gz"
-    dest: "{{ build_dir }}/swig-{{ swig_version }}.tar.gz"
-    validate_certs: false
-    timeout: 30
-    thirsty: false
-  register: swig_download_result
-  until: swig_download_result | succeeded
-  retries: 5
-  delay: 10
-
-- name: check if swig previously built successfully
+- name: check if swig built
   stat:
     path: "{{ build_dir }}/swig-completed"
   register: swig_completed
 
 - block:
-  - name: remove any previously unsuccessful swig build attempts
+  - name: download swig
+    get_url:
+      url: "http://downloads.sourceforge.net/project/swig/swig/swig-{{ swig_version }}/swig-{{ swig_version }}.tar.gz"
+      dest: "{{ build_dir }}/swig-{{ swig_version }}.tar.gz"
+      validate_certs: false
+      timeout: 30
+    register: swig_download_result
+    until: swig_download_result | succeeded
+    retries: 5
+    delay: 10
+
+  - name: remove any previous swig build attempts
     file:
       path: "{{ build_dir }}/swig-{{ swig_version }}"
       state: absent
@@ -39,12 +33,12 @@
     args:
       chdir: "{{ build_dir }}/swig-{{ swig_version }}"
 
-  - name: make swig
+  - name: build swig
     command: make
     args:
       chdir: "{{ build_dir }}/swig-{{ swig_version }}"
 
-  - name: make install swig
+  - name: install swig
     command: make install
     args:
       chdir: "{{ build_dir }}/swig-{{ swig_version }}"

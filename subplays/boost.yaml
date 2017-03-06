@@ -1,30 +1,24 @@
 ---
 - set_fact: boost_v={{ boost_version.replace('.', '_') }}
 
-- name: make build dir
-  file:
-    path: "{{ build_dir }}"
-    state: directory
-
-- name: download boost
-  get_url:
-    url: "http://downloads.sourceforge.net/project/boost/boost/{{ boost_version }}/boost_{{ boost_v }}.tar.gz"
-    dest: "{{ build_dir }}/boost_{{ boost_v }}.tar.gz"
-    validate_certs: false
-    timeout: 30
-    thirsty: false
-  register: boost_download_result
-  until: boost_download_result | succeeded
-  retries: 5
-  delay: 10
-
-- name: check if boost previously built successfully
+- name: check if boost built
   stat:
     path: "{{ build_dir }}/boost-completed"
   register: boost_completed
 
 - block:
-  - name: remove any previously unsuccessful boost build attempts
+  - name: download boost
+    get_url:
+      url: "https://downloads.sourceforge.net/project/boost/boost/{{ boost_version }}/boost_{{ boost_v }}.tar.gz"
+      dest: "{{ build_dir }}/boost_{{ boost_v }}.tar.gz"
+      validate_certs: false
+      timeout: 30
+    register: boost_download_result
+    until: boost_download_result | succeeded
+    retries: 5
+    delay: 10
+
+  - name: remove any previous boost build attempts
     file:
       path: "{{ build_dir }}/boost_{{ boost_v }}"
       state: absent
@@ -48,20 +42,20 @@
       replace: "using gcc : : /opt/pl-build-tools/bin/g++ ; "
     when: ansible_architecture != 's390x'
 
-  - name: tell boost to use our locally-built cross-compiled gcc for s390x
+  - name: tell boost to use our locally-built gcc for s390x
     replace:
       dest: "{{ build_dir }}/boost_{{ boost_v }}/project-config.jam"
       regexp: "using gcc ; "
       replace: "using gcc : : /opt/pl-build-tools/bin/s390x-ibm-linux-gnu-g++ ; "
     when: ansible_architecture == 's390x'
 
-  - name: install boost
+  - name: build/install boost
     command: "./b2 cxxflags=-fPIC cflags=-fPIC -a install"
     args:
       chdir: "{{ build_dir }}/boost_{{ boost_v }}"
     when: ansible_architecture != 's390x'
 
-  - name: install boost for s390x
+  - name: build/install boost for s390x
     command: "./b2 cxxflags=-fPIC cflags=-fPIC -a install"
     args:
       chdir: "{{ build_dir }}/boost_{{ boost_v }}"

@@ -23,7 +23,7 @@ module PuppetAgentBuild
     def prep_for_ansible
       request_boxes
       watch_jobs
-      sleep 30 # sometimes the boxes are a little slow to get an ip addr
+      sleep 30 # sometimes the boxes are a little slow to get an IP address
 
       prep
     end
@@ -71,8 +71,9 @@ module PuppetAgentBuild
       # is that your final answer?
       job_id = ret.strip.split.last.gsub(/\['(.*)'\]/, "#{$1}")
 
-      puts "#{family}:#{arch} --> #{job_id}"
-      @jobs << Job.new(job_id, family, arch)
+      job = Job.new(job_id, family, arch)
+      @jobs << job
+      puts "#{job} --> #{job.id}"
     end
 
     def return_boxes
@@ -117,18 +118,18 @@ module PuppetAgentBuild
     end
 
     def reserved(job)
-      puts "#{job.family}:#{job.arch} is reserved (#{jobs_left}) => #{job.host}"
+      puts "#{job} is reserved (#{jobs_left}) => #{job.host}"
       # don't remove a job once it's reserved
     end
 
     def completed(job)
-      puts "#{job.family}:#{job.arch} has completed prematurely. requesting another..."
+      puts "#{job} has completed prematurely. requesting another..."
       request_box(job.family, job.arch)
       @jobs -= [ job ]
     end
 
     def killed(job)
-      puts "#{job.family}:#{job.arch} has been #{job.last_status}. removing..."
+      puts "#{job} has been #{job.last_status}. removing..."
       @jobs -= [ job ]
     end
 

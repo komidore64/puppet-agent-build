@@ -1,0 +1,39 @@
+---
+# i386x
+- name: patch el-5-i386 platform
+  patch:
+    src: "patches/{{ puppet_agent_version }}/puppet-agent/configs/platforms/el-5-i386.rb.patch"
+    dest: "{{ playbook_dir }}/puppet-agent/configs/platforms/el-5-i386.rb"
+
+# x86_64
+- name: patch el-5-x86_64 platform
+  patch:
+    src: "patches/{{ puppet_agent_version }}/puppet-agent/configs/platforms/el-5-x86_64.rb.patch"
+    dest: "{{ playbook_dir }}/puppet-agent/configs/platforms/el-5-x86_64.rb"
+
+- name: patch el-7-x86_64 platform
+  patch:
+    src: "patches/{{ puppet_agent_version }}/puppet-agent/configs/platforms/el-7-x86_64.rb.patch"
+    dest: "{{ playbook_dir }}/puppet-agent/configs/platforms/el-7-x86_64.rb"
+
+# s390x
+- name: patch el-6-s390x platform
+  patch:
+    src: "patches/{{ puppet_agent_version }}/puppet-agent/configs/platforms/el-6-s390x.rb.patch"
+    dest: "{{ playbook_dir }}/puppet-agent/configs/platforms/el-6-s390x.rb"
+
+- name: patch el-7-s390x platform
+  patch:
+    src: "patches/{{ puppet_agent_version }}/puppet-agent/configs/platforms/el-7-s390x.rb.patch"
+    dest: "{{ playbook_dir }}/puppet-agent/configs/platforms/el-7-s390x.rb"
+
+# ppc64
+- name: copy el-6-ppc64.rb platform
+  copy:
+    src: newfiles/puppet-agent/configs/platforms/el-6-ppc64.rb
+    dest: "{{ playbook_dir }}/puppet-agent/configs/platforms/el-6-ppc64.rb"
+
+- name: copy el-7-ppc64.rb platform
+  copy:
+    src: newfiles/puppet-agent/configs/platforms/el-7-ppc64.rb
+    dest: "{{ playbook_dir }}/puppet-agent/configs/platforms/el-7-ppc64.rb"

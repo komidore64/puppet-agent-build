@@ -1,28 +1,22 @@
 ---
-- name: make build dir
-  file:
-    path: "{{ build_dir }}"
-    state: directory
-
-- name: download cmake
-  get_url:
-    url: "https://cmake.org/files/v3.2/cmake-{{ cmake_version }}.tar.gz"
-    dest: "{{ build_dir }}/cmake-{{ cmake_version }}.tar.gz"
-    validate_certs: false
-    timeout: 30
-    thirsty: false
-  register: cmake_download_result
-  until: cmake_download_result | succeeded
-  retries: 5
-  delay: 10
-
-- name: check if cmake previously built successfully
+- name: check if cmake built
   stat:
     path: "{{ build_dir }}/cmake-completed"
   register: cmake_completed
 
 - block:
-  - name: remove any previously unsuccessful cmake build attempts
+  - name: download cmake
+    get_url:
+      url: "https://cmake.org/files/v3.2/cmake-{{ cmake_version }}.tar.gz"
+      dest: "{{ build_dir }}/cmake-{{ cmake_version }}.tar.gz"
+      validate_certs: false
+      timeout: 30
+    register: cmake_download_result
+    until: cmake_download_result | succeeded
+    retries: 5
+    delay: 10
+
+  - name: remove any previous cmake build attempts
     file:
       path: "{{ build_dir }}/cmake-{{ cmake_version }}"
       state: absent
@@ -39,19 +33,19 @@
     args:
       chdir: "{{ build_dir }}/cmake-{{ cmake_version }}"
 
-  - name: make cmake
+  - name: build cmake
     command: make
     args:
       chdir: "{{ build_dir }}/cmake-{{ cmake_version }}"
 
-  - name: make install cmake
+  - name: install cmake
     command: make install
     args:
       chdir: "{{ build_dir }}/cmake-{{ cmake_version }}"
 
-  - name: cmake build/install successfully
+  - name: cmake build/install completed
     file:
-      path: "{{ build_dir}}/cmake-completed"
+      path: "{{ build_dir }}/cmake-completed"
       state: touch
 
   when: cmake_completed.stat.islnk is not defined # block

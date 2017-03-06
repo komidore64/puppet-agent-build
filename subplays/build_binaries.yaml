@@ -1,0 +1,28 @@
+---
+- name: make build dir
+  file:
+    path: "{{ build_dir }}"
+    state: directory
+
+- include: subplays/gcc.yaml
+- include: subplays/cmake.yaml
+- include: subplays/boost.yaml
+- include: subplays/yaml-cpp.yaml
+- include: subplays/swig.yaml
+
+- name: install toolchain file
+  copy:
+    src: "newfiles/{{ puppetlabs_build_dir }}/pl-build-toolchain.cmake"
+    dest: "{{ puppetlabs_build_dir }}"
+
+- name: archive build binaries
+  shell: "tar cv {{ build_dir }}/gcc-{{ gcc_version }} {{ build_dir }}/cmake-{{ cmake_version }} {{ build_dir }}/boost_{{ boost_v }} {{ build_dir }}/yaml-cpp-release-{{ yaml_cpp_version }} {{ build_dir }}/swig-{{ swig_version }} {{ puppetlabs_build_dir }} | gzip --best > /puppet-agent-build-el{{ el_version }}-{{ el_arch }}.tar.gz"
+  args:
+    chdir: /
+
+- name: fetch build binaries archive from build host
+  synchronize:
+    src: "/puppet-agent-build-el{{ el_version }}-{{ el_arch }}.tar.gz"
+    dest: "{{ playbook_dir }}/build-binaries/el{{ el_version }}-{{ el_arch }}.tar.gz"
+    mode: pull
+

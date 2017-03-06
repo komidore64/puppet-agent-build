@@ -7,5 +7,6 @@ build/*
 *.pyc
 
 SRPMs
+build-binaries/*.tar.gz
 inventory.ini
-ansible.log
+logs/ansible.log
