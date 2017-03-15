@@ -5,6 +5,7 @@ GEM
       debug_inspector (>= 0.0.1)
     byebug (9.0.6)
     coderay (1.1.1)
+    colored (1.2)
     debug_inspector (0.0.2)
     method_source (0.8.2)
     mini_portile2 (2.1.0)
@@ -20,6 +21,10 @@ GEM
     pry-stack_explorer (0.4.9.2)
       binding_of_caller (>= 0.7)
       pry (>= 0.9.11)
+    rake (12.0.0)
+    rake-notes (0.2.0)
+      colored
+      rake
     slop (3.6.0)
 
 PLATFORMS
@@ -30,6 +35,7 @@ DEPENDENCIES
   pry
   pry-byebug
   pry-stack_explorer
+  rake-notes
 
 BUNDLED WITH
    1.11.2
