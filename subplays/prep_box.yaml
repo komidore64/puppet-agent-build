@@ -34,13 +34,13 @@
 
   # TODO: uncomment with proper url once we have it
   # - name: get prebuilt binaries archive from dogfood
-  # - get_url:
-  # -   url: "http://fqdn.com/files/puppet-agent-build/el{{ el_version }}-{{ el_arch }}.tar.gz"
-  # -   dest: "/el{{ el_version }}-{{ el_arch }}.tar.gz"
-  # -   validate_certs: false
-  # -   timeout: 30
-  # - register: dogfood_build_binaries
-  # - ignore_errors: true
+  #   get_url:
+  #     url: "http://fqdn.com/files/puppet-agent-build/el{{ el_version }}-{{ el_arch }}.tar.gz"
+  #     dest: "/el{{ el_version }}-{{ el_arch }}.tar.gz"
+  #     validate_certs: false
+  #     timeout: 30
+  #   register: dogfood_build_binaries
+  #   ignore_errors: true
 
   - name: get prebuilt binaries archive from local puppet-agent-build repo
     synchronize:
@@ -54,10 +54,12 @@
       src: "/el{{ el_version }}-{{ el_arch }}.tar.gz"
       dest: /
       remote_src: true
-    when: (dogfood_build_binaries | succeeded) or (repo_build_binaries | succeeded)
+    # when: (dogfood_build_binaries | succeeded) or (repo_build_binaries | succeeded)
+    when: repo_build_binaries | succeeded
 
   - include: subplays/build_binaries.yaml
-    when: (dogfood_build_binaries | failed) and (repo_build_binaries | failed)
+    # when: (dogfood_build_binaries | failed) and (repo_build_binaries | failed)
+    when: repo_build_binaries | failed
 
   - name: box preparation completed
     file:
