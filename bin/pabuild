@@ -1,0 +1,10 @@
+#!/usr/bin/env ruby
+
+require File.join(File.dirname(__FILE__), '..', 'lib', 'puppet_agent_build')
+
+begin
+  PuppetAgentBuild::CLI.run(ARGV)
+rescue StandardError => e
+  puts e.message
+  exit 1
+end
