@@ -46,6 +46,7 @@
     synchronize:
       src: "{{ playbook_dir }}/build-binaries/el{{ el_version }}-{{ el_arch }}.tar.gz"
       dest: "/el{{ el_version }}-{{ el_arch }}.tar.gz"
+      rsync_timeout: 120
     register: repo_build_binaries
     ignore_errors: true
 
@@ -60,6 +61,12 @@
   - include: subplays/build_binaries.yaml
     # when: (dogfood_build_binaries | failed) and (repo_build_binaries | failed)
     when: repo_build_binaries | failed
+
+  - name: copy libstdc++ to /usr/lib64
+    copy:
+      src: "{{ puppetlabs_build_dir }}/lib64/libstdc++.so.6"
+      dest: /usr/lib64/libstdc++.so.6
+      remote_src: true
 
   - name: box preparation completed
     file:

@@ -25,4 +25,4 @@
     src: "/puppet-agent-build-el{{ el_version }}-{{ el_arch }}.tar.gz"
     dest: "{{ playbook_dir }}/build-binaries/el{{ el_version }}-{{ el_arch }}.tar.gz"
     mode: pull
-
+    rsync_timeout: 120
